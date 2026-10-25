@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CrossIcon, MenuIcon } from "@/components/ui/icons";
@@ -13,7 +13,8 @@ const LINKS = [
 
 const OPERATOR_LINK = { href: "/operator/login", label: "Operator" } as const;
 
-function isActive(pathname: string, href: string): boolean {
+function isActive(pathname: string | null, href: string): boolean {
+  if (pathname === null) return false;
   if (href === OPERATOR_LINK.href) return pathname.startsWith("/operator");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
@@ -21,9 +22,24 @@ function isActive(pathname: string, href: string): boolean {
 /**
  * Header situs. < md: logo + tombol "Menu" berlabel yang membuka daftar tautan
  * (bukan baris tautan yang terlipat dua). md+: baris tautan biasa.
+ *
+ * usePathname di layout menahan prerender rute dengan param dinamis
+ * (cacheComponents), jadi dibungkus Suspense; fallback = header yang sama
+ * tanpa penanda tautan aktif.
  */
 export function SiteHeader() {
-  const pathname = usePathname();
+  return (
+    <Suspense fallback={<SiteHeaderView pathname={null} />}>
+      <CurrentSiteHeader />
+    </Suspense>
+  );
+}
+
+function CurrentSiteHeader() {
+  return <SiteHeaderView pathname={usePathname()} />;
+}
+
+function SiteHeaderView({ pathname }: { pathname: string | null }) {
   const [open, setOpen] = useState(false);
   // Tutup menu setelah berpindah halaman.
   const [menuPath, setMenuPath] = useState(pathname);
