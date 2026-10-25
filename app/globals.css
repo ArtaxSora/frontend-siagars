@@ -1,26 +1,114 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/*
+ * Token desain SiagaRS — dari template-web/DESIGN.md ("Civic Transparency System").
+ * Status selalu dipasangkan teks + ikon; warna bukan satu-satunya penanda.
+ */
+@theme {
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-well: #f1f5f9;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
+
+  --color-ink: #0f172a;
+  --color-muted: #475569;
+  --color-faint: #64748b;
+
+  --color-brand: #0d7a75;
+  --color-brand-deep: #0a5f5b;
+  --color-brand-tint: #e6f4f3;
+
+  --color-trust: #1e40af;
+  --color-trust-action: #2563eb;
+  --color-trust-wash: #eff6ff;
+
+  --color-ok-fg: #047857;
+  --color-ok-bg: #ecfdf5;
+  --color-ok-line: #a7f3d0;
+
+  --color-warn-fg: #b45309;
+  --color-warn-bg: #fffbeb;
+  --color-warn-line: #fde68a;
+
+  --color-bad-fg: #be123c;
+  --color-bad-bg: #fff1f2;
+  --color-bad-line: #fecdd3;
+
+  --color-unk-fg: #475569;
+  --color-unk-bg: #f1f5f9;
+  --color-unk-line: #cbd5e1;
+
+  --color-kurasi-fg: #0369a1;
+  --color-kurasi-bg: #e0f2fe;
+  --color-kurasi-line: #bae6fd;
+
+  --color-sim-fg: #b45309;
+  --color-sim-bg: #fef3c7;
+  --color-sim-line: #f59e0b;
+
+  --color-sandbox-fg: #4338ca;
+  --color-sandbox-bg: #eef2ff;
+  --color-sandbox-line: #c7d2fe;
+
+  --color-banner-fg: #92400e;
+  --color-banner-bg: #fef3c7;
+  --color-banner-line: #fde68a;
+
+  --color-fresh: #059669;
+  --color-aging: #d97706;
+  --color-stale: #dc2626;
+  --color-unknown-dot: #94a3b8;
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-level2:
+    0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+  --shadow-level3: 0 8px 24px -4px rgba(15, 23, 42, 0.1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-canvas);
+  color: var(--color-ink);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+/* Fokus terlihat: cincin teal 3px dengan halo putih (DESIGN.md). */
+:focus-visible {
+  outline: 3px solid var(--color-brand);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #ffffff;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.skeleton {
+  background: var(--color-line);
+  border-radius: 0.25rem;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
