@@ -81,9 +81,37 @@ export interface HospitalBed extends Provenance {
   version: number;
 }
 
+/** Kode dari sumber (mis. kelas RS SATUSEHAT). name null sampai disinkron ulang. */
+export interface Coded {
+  code: string;
+  name: string | null;
+}
+
+/**
+ * Ringkasan baca-saja (v0.2) untuk badge & filter. Data tidak ada =
+ * unknown/null, tidak pernah 0/false. Bukan klaim kualitas klinis.
+ */
+export interface FacilitySummary {
+  icu: ServiceStatus;
+  nicu: ServiceStatus;
+  picu: ServiceStatus;
+  rawat_inap: ServiceStatus;
+  bpjs: boolean | null;
+  /** Dari kategori bed `general`. */
+  inpatient_beds: {
+    total: number | null;
+    available: number | null;
+    freshness: Freshness;
+  };
+  last_source_updated_at: string | null;
+}
+
 /** Provenance pada Hospital berlaku untuk record RS (termasuk BPJS). */
 export interface Hospital extends Provenance {
   id: string;
+  /** Kode sumber (SATUSEHAT); null untuk simulasi. Boleh dipakai di detail & compare. */
+  external_id: string | null;
+  source_namespace: string | null;
   name: string;
   address: string | null;
   city_code: string;
@@ -96,8 +124,15 @@ export interface Hospital extends Provenance {
   phone: string | null;
   /** null = BPJS belum diketahui (bukan "tidak menerima"). */
   bpjs: boolean | null;
+  bpjs_source_url: string | null;
+  bpjs_source_updated_at: string | null;
   /** Jarak garis lurus (Haversine), BUKAN waktu tempuh. */
   distance_km: number | null;
+  facility_class: Coded | null;
+  facility_subtype: Coded | null;
+  /** null = belum diketahui. */
+  operational: boolean | null;
+  facility_summary: FacilitySummary;
   services: HospitalService[];
   beds: HospitalBed[];
 }
@@ -106,6 +141,25 @@ export interface ServiceMaster {
   slug: string;
   name: string;
   category: string;
+}
+
+/** Kode wilayah dipakai apa adanya: seed "31.71" dan MSI "3171" berbeda. */
+export interface Region {
+  code: string;
+  name: string;
+}
+
+export interface Province extends Region {
+  cities: Region[];
+}
+
+/** Hasil ringkas autocomplete; detail diambil lewat `id`. */
+export interface Suggestion {
+  id: string;
+  external_id: string | null;
+  name: string;
+  city_name: string;
+  data_origin: DataOrigin;
 }
 
 /* ---------------- Envelope ---------------- */
@@ -125,6 +179,14 @@ export interface ListMeta extends DetailMeta {
 
 export interface CompareMeta extends DetailMeta {
   count: number;
+}
+
+export interface CountMeta {
+  count: number;
+}
+
+export interface SuggestMeta extends CountMeta {
+  dataset: Dataset;
 }
 
 export interface ApiSuccess<T, M = unknown> {

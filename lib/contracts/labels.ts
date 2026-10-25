@@ -4,7 +4,9 @@
  */
 import type {
   BedCategory,
+  Coded,
   DataOrigin,
+  FacilitySummary,
   Freshness,
   ReferralStatus,
   ServiceStatus,
@@ -75,4 +77,37 @@ export const BED_CATEGORY_LABEL: Record<BedCategory, string> = {
 /** Label kategori tempat tidur; kategori tak dikenal ditampilkan apa adanya. */
 export function bedCategoryLabel(category: string): string {
   return (BED_CATEGORY_LABEL as Record<string, string>)[category] ?? category;
+}
+
+/** Status fasilitas pada facility_summary (urut tampil tetap). */
+export const FACILITY_KEYS = ["icu", "nicu", "picu", "rawat_inap"] as const satisfies
+  readonly (keyof FacilitySummary)[];
+export type FacilityKey = (typeof FACILITY_KEYS)[number];
+
+export const FACILITY_LABEL: Record<FacilityKey, string> = {
+  icu: "ICU",
+  nicu: "NICU",
+  picu: "PICU",
+  rawat_inap: "Rawat inap",
+};
+
+/** Slug layanan yang sudah terwakili facility_summary (hindari tampil ganda). */
+export const FACILITY_SERVICE_SLUGS: ReadonlySet<string> = new Set([
+  "icu",
+  "nicu",
+  "picu",
+  "rawat-inap",
+]);
+
+/** Kelas/subtipe RS: name bisa null sampai sumber disinkron ulang -> pakai code. */
+export function codedLabel(value: Coded | null): string | null {
+  if (!value) return null;
+  return value.name ?? value.code;
+}
+
+/** null = belum diketahui, bukan "tidak beroperasi". */
+export function operationalLabel(value: boolean | null): string {
+  if (value === true) return "Beroperasi menurut sumber";
+  if (value === false) return "Tidak beroperasi menurut sumber";
+  return "Belum diketahui";
 }

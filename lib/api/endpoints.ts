@@ -5,7 +5,9 @@
 import { apiRequest } from "@/lib/api/client";
 import type {
   CompareMeta,
+  CountMeta,
   CsrfResult,
+  Dataset,
   DetailMeta,
   HealthResult,
   Hospital,
@@ -14,11 +16,14 @@ import type {
   ListMeta,
   LoginResult,
   Operator,
+  Province,
   ReadyResult,
   Referral,
   ReferralStatus,
   ServiceMaster,
   ServiceStatus,
+  SuggestMeta,
+  Suggestion,
   TrackingResult,
 } from "@/lib/contracts/types";
 import { buildApiQueryString, type HospitalQuery } from "@/lib/hospitals/query";
@@ -39,7 +44,24 @@ export function getHospital(id: string, signal?: AbortSignal) {
   );
 }
 
-/** 2–3 UUID unik; tanpa parameter lain. Satu ID tak ada -> 404 seluruhnya. */
+/** Autocomplete nama RS; q wajib (1–100), limit maks 20. */
+export function suggestHospitals(
+  q: string,
+  dataset: Dataset,
+  limit: number,
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams({ q, dataset, limit: String(limit) });
+  return apiRequest<Suggestion[], SuggestMeta>(
+    `/hospitals/suggest?${params.toString()}`,
+    { signal },
+  );
+}
+
+/**
+ * 2–3 ID unik, masing-masing UUID atau external_id; tanpa parameter lain.
+ * Satu ID tak ada -> 404 seluruhnya; dua ID untuk RS yang sama -> 422.
+ */
 export function compareHospitals(ids: string[], signal?: AbortSignal) {
   return apiRequest<Hospital[], CompareMeta>(
     `/hospitals/compare?ids=${encodeURIComponent(ids.join(","))}`,
@@ -49,6 +71,11 @@ export function compareHospitals(ids: string[], signal?: AbortSignal) {
 
 export function listServices(signal?: AbortSignal) {
   return apiRequest<ServiceMaster[]>("/services", { signal });
+}
+
+/** Provinsi beserta kota/kabupaten; panggil sekali, `code` dipakai apa adanya. */
+export function listRegions(signal?: AbortSignal) {
+  return apiRequest<Province[], CountMeta>("/regions", { signal });
 }
 
 /** Kode dikirim lewat BODY (POST), tidak pernah lewat URL/query. */
@@ -89,6 +116,21 @@ export function logout() {
 
 export function listAdminReferrals(signal?: AbortSignal) {
   return apiRequest<Referral[]>("/admin/referrals", { signal });
+}
+
+/** RS dalam scope operator (urut sesuai server). */
+export function listAdminHospitals(signal?: AbortSignal) {
+  return apiRequest<Hospital[], CountMeta & DetailMeta>("/admin/hospitals", {
+    signal,
+  });
+}
+
+/** Detail RS dalam scope operator; sumber `version` terbaru sebelum PATCH. */
+export function getAdminHospital(id: string, signal?: AbortSignal) {
+  return apiRequest<Hospital, DetailMeta>(
+    `/admin/hospitals/${encodeURIComponent(id)}`,
+    { signal },
+  );
 }
 
 export function patchReferralStatus(

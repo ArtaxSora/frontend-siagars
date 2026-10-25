@@ -96,12 +96,19 @@ export function isMappable(hospital: Hospital): hospital is MappableHospital {
 export const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-/** Parse `ids` untuk /bandingkan: 2–3 UUID lowercase unik; selain itu null. */
+/** external_id dari sumber (mis. kode SATUSEHAT "1004673817"). */
+export const EXTERNAL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$/;
+
+/**
+ * Parse `ids` untuk /bandingkan: 2–3 ID unik, masing-masing UUID lowercase
+ * atau external_id; selain itu null. Dua ID berbeda yang menunjuk RS sama
+ * hanya bisa dideteksi server (422).
+ */
 export function parseCompareIds(raw: string | null): string[] | null {
   if (!raw) return null;
   const ids = raw.split(",").map((s) => s.trim());
   if (ids.length < 2 || ids.length > 3) return null;
-  if (!ids.every((id) => UUID_RE.test(id))) return null;
+  if (!ids.every((id) => UUID_RE.test(id) || EXTERNAL_ID_RE.test(id))) return null;
   if (new Set(ids).size !== ids.length) return null;
   return ids;
 }

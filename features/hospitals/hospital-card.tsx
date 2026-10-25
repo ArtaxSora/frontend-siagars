@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Hospital } from "@/lib/contracts/types";
-import { bedCategoryLabel } from "@/lib/contracts/labels";
+import { FACILITY_SERVICE_SLUGS, bedCategoryLabel } from "@/lib/contracts/labels";
 import { formatDistanceKm } from "@/lib/format/beds";
 import {
   cardBeds,
@@ -11,37 +11,10 @@ import {
   worstFreshness,
 } from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
+import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { FreshnessLabel, OriginBadge, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink, Button } from "@/components/ui/button";
-import {
-  CheckIcon,
-  CrossIcon,
-  PhoneIcon,
-  PinIcon,
-  QuestionIcon,
-} from "@/components/ui/icons";
-
-function BpjsLine({ accepted }: { accepted: boolean | null }) {
-  if (accepted === true) {
-    return (
-      <span className="inline-flex items-center gap-1 text-ok-fg">
-        <CheckIcon /> BPJS: diterima menurut sumber
-      </span>
-    );
-  }
-  if (accepted === false) {
-    return (
-      <span className="inline-flex items-center gap-1 text-bad-fg">
-        <CrossIcon /> BPJS: tidak diterima menurut sumber
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 text-unk-fg">
-      <QuestionIcon /> BPJS: belum diketahui
-    </span>
-  );
-}
+import { PhoneIcon, PinIcon } from "@/components/ui/icons";
 
 export function HospitalCard({
   hospital,
@@ -68,8 +41,12 @@ export function HospitalCard({
   const worst = worstFreshness(sources);
   const distance = formatDistanceKm(hospital.distance_km);
   const tel = telHref(hospital.phone);
-  const known = hospital.services.filter((s) => s.status !== "unknown");
-  const unknownCount = hospital.services.length - known.length;
+  // ICU/NICU/PICU/rawat inap sudah tampil lewat facility_summary.
+  const otherServices = hospital.services.filter(
+    (s) => !FACILITY_SERVICE_SLUGS.has(s.slug),
+  );
+  const known = otherServices.filter((s) => s.status !== "unknown");
+  const unknownCount = otherServices.length - known.length;
   // Kartu berbasis data simulasi: garis putus-putus amber, tanpa bayangan (DESIGN.md).
   const hasSimulation = origins.includes("simulation");
 
@@ -100,7 +77,7 @@ export function HospitalCard({
             {distance && <span className="tabular-nums">{distance}</span>}
           </p>
           <p className="text-[13px] font-semibold leading-4">
-            <BpjsLine accepted={hospital.bpjs} />
+            <BpjsStatus accepted={hospital.facility_summary.bpjs} />
           </p>
         </header>
 
@@ -121,7 +98,14 @@ export function HospitalCard({
 
         <div className="flex flex-col gap-1.5">
           <p className="text-[11px] font-semibold tracking-[0.02em] text-faint">
-            LAYANAN
+            FASILITAS
+          </p>
+          <FacilityBadges summary={hospital.facility_summary} />
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[11px] font-semibold tracking-[0.02em] text-faint">
+            LAYANAN LAIN
           </p>
           {known.length > 0 ? (
             <ul className="flex flex-wrap gap-x-4 gap-y-1.5">

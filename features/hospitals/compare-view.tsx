@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { compareHospitals } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
-import { bedCategoryLabel } from "@/lib/contracts/labels";
+import {
+  FACILITY_KEYS,
+  FACILITY_LABEL,
+  FACILITY_SERVICE_SLUGS,
+  bedCategoryLabel,
+  codedLabel,
+  operationalLabel,
+} from "@/lib/contracts/labels";
 import { BED_CATEGORIES, type Hospital } from "@/lib/contracts/types";
 import { parseCompareIds } from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
@@ -23,7 +30,11 @@ function bpjsText(v: boolean | null) {
 function Table({ hospitals }: { hospitals: Hospital[] }) {
   const slugs = [
     ...new Map(
-      hospitals.flatMap((h) => h.services.map((s) => [s.slug, s.name] as const)),
+      hospitals.flatMap((h) =>
+        h.services
+          .filter((s) => !FACILITY_SERVICE_SLUGS.has(s.slug))
+          .map((s) => [s.slug, s.name] as const),
+      ),
     ),
   ];
   return (
@@ -55,9 +66,41 @@ function Table({ hospitals }: { hospitals: Hospital[] }) {
           <tr className="border-b border-line">
             <th scope="row" className="p-3 align-top">BPJS</th>
             {hospitals.map((h) => (
-              <td key={h.id} className="p-3 align-top">{bpjsText(h.bpjs)}</td>
+              <td key={h.id} className="p-3 align-top">
+                {bpjsText(h.facility_summary.bpjs)}
+              </td>
             ))}
           </tr>
+          <tr className="border-b border-line">
+            <th scope="row" className="p-3 align-top">Kelas</th>
+            {hospitals.map((h) => (
+              <td key={h.id} className="p-3 align-top">
+                {codedLabel(h.facility_class) ?? (
+                  <span className="text-unk-fg">Belum diketahui</span>
+                )}
+              </td>
+            ))}
+          </tr>
+          <tr className="border-b border-line">
+            <th scope="row" className="p-3 align-top">Status operasional</th>
+            {hospitals.map((h) => (
+              <td key={h.id} className="p-3 align-top">
+                <span className={h.operational === null ? "text-unk-fg" : undefined}>
+                  {operationalLabel(h.operational)}
+                </span>
+              </td>
+            ))}
+          </tr>
+          {FACILITY_KEYS.map((key) => (
+            <tr key={key} className="border-b border-line">
+              <th scope="row" className="p-3 align-top">{FACILITY_LABEL[key]}</th>
+              {hospitals.map((h) => (
+                <td key={h.id} className="p-3 align-top">
+                  <StatusBadge status={h.facility_summary[key]} />
+                </td>
+              ))}
+            </tr>
+          ))}
           {BED_CATEGORIES.map((cat) => (
             <tr key={cat} className="border-b border-line">
               <th scope="row" className="p-3 align-top">{bedCategoryLabel(cat)}</th>
@@ -121,7 +164,7 @@ export function CompareView() {
         {back}
         <EmptyState
           title="Pilih 2–3 rumah sakit"
-          description="Tautan perbandingan harus memuat 2 sampai 3 ID rumah sakit yang berbeda. Pilih dari hasil pencarian."
+          description="Tautan perbandingan harus memuat 2 sampai 3 ID rumah sakit yang berbeda (UUID atau kode SATUSEHAT). Pilih dari hasil pencarian."
         />
       </div>
     );
@@ -134,6 +177,11 @@ export function CompareView() {
           <EmptyState
             title="Rumah sakit tidak ditemukan"
             description="Salah satu ID tidak ada, sehingga seluruh perbandingan tidak dapat ditampilkan."
+          />
+        ) : res.error.status === 422 ? (
+          <EmptyState
+            title="Perbandingan tidak valid"
+            description="Dua ID menunjuk rumah sakit yang sama, atau ID tidak sah. Pilih 2–3 rumah sakit yang berbeda."
           />
         ) : (
           <ErrorState error={res.error} onRetry={res.reload} title="Perbandingan tidak dapat dimuat" />

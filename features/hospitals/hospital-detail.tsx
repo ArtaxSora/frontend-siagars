@@ -5,18 +5,18 @@ import Link from "next/link";
 import { getHospital } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
 import { formatDistanceKm } from "@/lib/format/beds";
-import { bedCategoryLabel } from "@/lib/contracts/labels";
-import { directionsHref, telHref } from "@/lib/hospitals/summary";
+import {
+  bedCategoryLabel,
+  codedLabel,
+  operationalLabel,
+} from "@/lib/contracts/labels";
+import { formatWib } from "@/lib/format/time";
+import { directionsHref, safeSourceUrl, telHref } from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
+import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { SourceLine, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink } from "@/components/ui/button";
-import {
-  CheckIcon,
-  CrossIcon,
-  PhoneIcon,
-  QuestionIcon,
-  RouteIcon,
-} from "@/components/ui/icons";
+import { PhoneIcon, QuestionIcon, RouteIcon } from "@/components/ui/icons";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
@@ -88,7 +88,15 @@ export function HospitalDetail({ id }: { id: string }) {
   const tel = telHref(hospital.phone);
   const route = directionsHref(hospital);
   const distance = formatDistanceKm(hospital.distance_km);
-  const bpjs = hospital.bpjs;
+  const summary = hospital.facility_summary;
+  const bpjsSource = safeSourceUrl(hospital.bpjs_source_url);
+  const bpjsUpdated = formatWib(hospital.bpjs_source_updated_at);
+  const profile: Array<[string, string]> = [
+    ["Kelas", codedLabel(hospital.facility_class) ?? "Belum diketahui"],
+    ["Jenis", codedLabel(hospital.facility_subtype) ?? "Belum diketahui"],
+    ["Status operasional", operationalLabel(hospital.operational)],
+  ];
+  if (hospital.external_id) profile.push(["Kode SATUSEHAT", hospital.external_id]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -132,24 +140,55 @@ export function HospitalDetail({ id }: { id: string }) {
         <CapacityDisclaimer />
       </header>
 
+      <Section title="Profil fasilitas">
+        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-[max-content_1fr]">
+          {profile.map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt className="text-muted">{label}</dt>
+              <dd className={value === "Belum diketahui" ? "text-unk-fg" : "font-semibold"}>
+                {value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </Section>
+
+      <Section title="Ringkasan fasilitas">
+        <FacilityBadges summary={summary} />
+        <BedTile
+          label="Tempat tidur rawat inap"
+          available={summary.inpatient_beds.available}
+          total={summary.inpatient_beds.total}
+        />
+        <p className="text-[12px] leading-[18px] text-muted">
+          Ringkasan dari data yang ada; status &ldquo;Belum diketahui&rdquo;
+          berarti sumber belum menyediakan datanya, bukan tidak tersedia.
+        </p>
+      </Section>
+
       <Section title="BPJS">
         <p className="text-[16px] font-semibold">
-          {bpjs === true && (
-            <span className="inline-flex items-center gap-1 text-ok-fg">
-              <CheckIcon /> Menerima BPJS menurut sumber
-            </span>
-          )}
-          {bpjs === false && (
-            <span className="inline-flex items-center gap-1 text-bad-fg">
-              <CrossIcon /> Tidak menerima BPJS menurut sumber
-            </span>
-          )}
-          {bpjs === null && (
-            <span className="inline-flex items-center gap-1 text-unk-fg">
-              <QuestionIcon /> Belum diketahui
-            </span>
-          )}
+          <BpjsStatus accepted={summary.bpjs} long />
         </p>
+        {(bpjsSource || bpjsUpdated) && (
+          <p className="text-[12px] leading-[18px] text-muted">
+            Sumber BPJS
+            {bpjsUpdated && <> diperbarui {bpjsUpdated}</>}
+            {bpjsSource && (
+              <>
+                {" — "}
+                <a
+                  href={bpjsSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-trust underline"
+                >
+                  lihat sumber
+                </a>
+              </>
+            )}
+          </p>
+        )}
         <p className="text-[12px] leading-[18px] text-muted">
           Informasi ini bukan jaminan kelayakan pasien; konfirmasikan ke rumah
           sakit dan BPJS.

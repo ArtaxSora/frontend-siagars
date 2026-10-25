@@ -124,13 +124,21 @@ describe("tautan & ID", () => {
     assert.equal(safeSourceUrl(null), null);
   });
 
-  test("parseCompareIds: 2–3 UUID unik", () => {
+  test("parseCompareIds: 2–3 ID unik, UUID atau external_id", () => {
     const a = "123e4567-e89b-12d3-a456-426614174000";
     const b = "123e4567-e89b-12d3-a456-426614174001";
     assert.deepEqual(parseCompareIds(`${a},${b}`), [a, b]);
+    assert.deepEqual(parseCompareIds(`${a},1004673817`), [a, "1004673817"]);
+    assert.deepEqual(parseCompareIds("1004673817,1000000001"), [
+      "1004673817",
+      "1000000001",
+    ]);
     assert.equal(parseCompareIds(a), null);
     assert.equal(parseCompareIds(`${a},${a}`), null);
-    assert.equal(parseCompareIds(`${a},bukan-uuid`), null);
+    assert.equal(parseCompareIds(`${a},${b},1,2`), null);
+    assert.equal(parseCompareIds(`${a},bukan id`), null);
+    assert.equal(parseCompareIds(`${a},<script>`), null);
+    assert.equal(parseCompareIds(`${a},`), null);
     assert.equal(parseCompareIds(null), null);
   });
 });

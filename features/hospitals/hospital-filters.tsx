@@ -2,7 +2,13 @@
 
 import type { ReactNode } from "react";
 import type { ApiResource } from "@/lib/hooks/use-api-resource";
-import type { ApiSuccess, ServiceMaster } from "@/lib/contracts/types";
+import type {
+  ApiSuccess,
+  CountMeta,
+  Province,
+  Region,
+  ServiceMaster,
+} from "@/lib/contracts/types";
 import {
   activeFilterCount,
   type HospitalDataset,
@@ -46,6 +52,95 @@ function ToggleChip({
   );
 }
 
+/**
+ * Kode seed ("36.71") dan SATUSEHAT ("3671") adalah wilayah berbeda dengan
+ * nama yang bisa sama; tampilkan kode hanya bila nama bentrok.
+ */
+function regionOptionLabel(region: Region, siblings: Region[]): string {
+  const clash = siblings.some((r) => r.code !== region.code && r.name === region.name);
+  return clash ? `${region.name} (${region.code})` : region.name;
+}
+
+function RegionFilter({
+  query,
+  regions,
+  onFilterChange,
+}: {
+  query: HospitalQuery;
+  regions: ApiResource<ApiSuccess<Province[], CountMeta>>;
+  onFilterChange: (patch: Partial<Omit<HospitalQuery, "page">>) => void;
+}) {
+  const provinces = regions.data?.data ?? [];
+  const province = provinces.find((p) => p.code === query.province_code) ?? null;
+  const cities = province?.cities ?? [];
+  // Kode dari URL/kartu yang tidak ada di master tetap dipertahankan.
+  const unknownProvince = query.province_code !== "" && province === null;
+  const unknownCity =
+    query.city_code !== "" && !cities.some((c) => c.code === query.city_code);
+
+  if (regions.error && provinces.length === 0) {
+    return (
+      <p className="text-muted sm:col-span-2">
+        Daftar wilayah tidak dapat dimuat.{" "}
+        <button
+          type="button"
+          onClick={regions.reload}
+          className="font-semibold text-trust underline"
+        >
+          Coba lagi
+        </button>
+      </p>
+    );
+  }
+
+  return (
+    <>
+      <Field id="filter-province" label="Provinsi">
+        <select
+          id="filter-province"
+          className={inputClasses}
+          value={query.province_code}
+          disabled={provinces.length === 0}
+          onChange={(e) =>
+            onFilterChange({ province_code: e.target.value, city_code: "" })
+          }
+        >
+          <option value="">
+            {regions.loading && provinces.length === 0 ? "Memuat…" : "Semua provinsi"}
+          </option>
+          {unknownProvince && (
+            <option value={query.province_code}>Wilayah terpilih</option>
+          )}
+          {provinces.map((p) => (
+            <option key={p.code} value={p.code}>
+              {regionOptionLabel(p, provinces)}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <Field id="filter-city" label="Kota/kabupaten">
+        <select
+          id="filter-city"
+          className={inputClasses}
+          value={query.city_code}
+          disabled={query.province_code === ""}
+          onChange={(e) => onFilterChange({ city_code: e.target.value })}
+        >
+          <option value="">
+            {query.province_code === "" ? "Pilih provinsi dulu" : "Semua kota/kabupaten"}
+          </option>
+          {unknownCity && <option value={query.city_code}>Wilayah terpilih</option>}
+          {cities.map((c) => (
+            <option key={c.code} value={c.code}>
+              {regionOptionLabel(c, cities)}
+            </option>
+          ))}
+        </select>
+      </Field>
+    </>
+  );
+}
+
 const DATASET_OPTIONS: Array<{ value: HospitalDataset; label: string }> = [
   { value: "simulation", label: "Simulasi (demo, RS fiktif)" },
   { value: "real", label: "Data sandbox / nyata" },
@@ -55,7 +150,7 @@ const DATASET_OPTIONS: Array<{ value: HospitalDataset; label: string }> = [
 export function HospitalFilters({
   query,
   services,
-  regionLabel,
+  regions,
   onFilterChange,
   onReset,
   onUseLocation,
@@ -65,8 +160,7 @@ export function HospitalFilters({
 }: {
   query: HospitalQuery;
   services: ApiResource<ApiSuccess<ServiceMaster[]>>;
-  /** Nama wilayah aktif (dari data hasil), bila diketahui. */
-  regionLabel: string | null;
+  regions: ApiResource<ApiSuccess<Province[], CountMeta>>;
   onFilterChange: (patch: Partial<Omit<HospitalQuery, "page">>) => void;
   onReset: () => void;
   onUseLocation: () => void;
@@ -76,7 +170,6 @@ export function HospitalFilters({
 }) {
   const hasCoords = query.lat !== null && query.lng !== null;
   const serviceList = services.data?.data ?? [];
-  const hasRegion = query.province_code !== "" || query.city_code !== "";
 
   function toggleService(slug: string, on: boolean) {
     const next = on
@@ -146,6 +239,11 @@ export function HospitalFilters({
       </fieldset>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <RegionFilter
+          query={query}
+          regions={regions}
+          onFilterChange={onFilterChange}
+        />
         <Field id="filter-dataset" label="Sumber data">
           <select
             id="filter-dataset"
@@ -179,20 +277,6 @@ export function HospitalFilters({
         </Field>
       </div>
 
-      {hasRegion && (
-        <p className="flex flex-wrap items-center gap-2 text-[13px]">
-          <span className="font-semibold">Wilayah:</span>
-          <span className="rounded-lg border border-line bg-well px-2 py-1">
-            {regionLabel ?? "Wilayah terpilih"}
-          </span>
-          <Button
-            variant="tertiary"
-            onClick={() => onFilterChange({ province_code: "", city_code: "" })}
-          >
-            Hapus filter wilayah
-          </Button>
-        </p>
-      )}
 
       <div className="flex flex-wrap items-center gap-2">
         {hasCoords ? (
