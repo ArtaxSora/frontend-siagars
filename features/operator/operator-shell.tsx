@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -45,19 +45,18 @@ const NAV = [
  * dilakukan API; jangan mengandalkan komponen ini untuk keamanan.
  */
 export function OperatorShell({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const me = useApiResource("auth:me", (signal) => getMe(signal));
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<ApiError | null>(null);
 
-  const redirectToLogin = useCallback(
-    (expired: boolean) => {
-      clearCsrfToken();
-      router.replace(expired ? "/operator/login?expired=1" : "/operator/login");
-    },
-    [router],
-  );
+  // Navigasi penuh (bukan router.replace): cacheComponents menyimpan state
+  // halaman yang pernah dibuka, sehingga tombol "Keluar…"/"Masuk…" dan data
+  // sesi lama bisa tertinggal. Muat ulang membersihkan semuanya.
+  const redirectToLogin = useCallback((expired: boolean) => {
+    clearCsrfToken();
+    window.location.replace(expired ? "/operator/login?expired=1" : "/operator/login");
+  }, []);
 
   const handleAuthError = useCallback(
     (error: ApiError) => {
