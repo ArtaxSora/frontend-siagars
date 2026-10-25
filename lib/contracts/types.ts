@@ -197,3 +197,15 @@ export interface LoginResult {
 export interface CsrfResult {
   csrf_token: string;
 }
+
+/* ---------------- Sistem ---------------- */
+
+/** GET /health — liveness proses, tanpa menyentuh DB. */
+export interface HealthResult {
+  status: "ok";
+}
+
+/** GET /ready — DB terhubung dan migration tersedia; gagal -> 503 not_ready. */
+export interface ReadyResult {
+  status: "ready";
+}

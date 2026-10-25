@@ -17,6 +17,11 @@ export function SiteFooter() {
           </Link>
           .
         </p>
+        <p>
+          <Link href="/status" className="font-semibold text-trust underline">
+            Status sistem
+          </Link>
+        </p>
       </div>
     </footer>
   );

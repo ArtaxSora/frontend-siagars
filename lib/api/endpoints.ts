@@ -7,12 +7,14 @@ import type {
   CompareMeta,
   CsrfResult,
   DetailMeta,
+  HealthResult,
   Hospital,
   HospitalBed,
   HospitalService,
   ListMeta,
   LoginResult,
   Operator,
+  ReadyResult,
   Referral,
   ReferralStatus,
   ServiceMaster,
@@ -120,4 +122,14 @@ export function patchHospitalBeds(
     `/admin/hospitals/${encodeURIComponent(hospitalId)}/beds/${encodeURIComponent(category)}`,
     { method: "PATCH", body, csrf: true },
   );
+}
+
+/* ---------------- Sistem ---------------- */
+
+export function getHealth(signal?: AbortSignal) {
+  return apiRequest<HealthResult>("/health", { signal });
+}
+
+export function getReady(signal?: AbortSignal) {
+  return apiRequest<ReadyResult>("/ready", { signal });
 }

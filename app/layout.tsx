@@ -23,7 +23,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
+    // Ekstensi browser (mis. Night Eye) menambah atribut di <html> sebelum hidrasi.
+    <html
+      lang="id"
+      className={`${jakarta.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-full flex-col">
         <a
           href="#main-content"

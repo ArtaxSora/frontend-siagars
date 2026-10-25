@@ -12,6 +12,8 @@ const apiProxyTarget = (
 ).replace(/\/+$/, "");
 
 const nextConfig: NextConfig = {
+  // Dev server dibuka lewat IP jaringan lokal (mis. dari HP); tanpa ini HMR diblokir.
+  allowedDevOrigins: ["172.26.176.1"],
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
