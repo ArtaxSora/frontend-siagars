@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { getHospital } from "@/lib/api/endpoints";
 
 /**
- * Nama RS untuk daftar ID (kontrak tidak punya endpoint daftar nama untuk
- * operator). Diambil satu per satu lewat GET /hospitals/{id}; gagal -> nama
- * tidak tersedia dan UI menampilkan ID.
+ * Nama RS untuk daftar ID, termasuk RS tujuan rujukan di luar scope operator
+ * (GET /admin/hospitals hanya memuat RS dalam scope). Diambil satu per satu
+ * lewat GET /hospitals/{id}; gagal -> nama tidak tersedia dan UI menampilkan ID.
  */
 export function useHospitalNames(ids: string[]): Record<string, string> {
   const [names, setNames] = useState<Record<string, string>>({});
