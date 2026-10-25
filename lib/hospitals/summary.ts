@@ -33,6 +33,20 @@ export function worstFreshness(sources: Provenance[]): Freshness {
   );
 }
 
+/**
+ * Ada nilai simulasi di RS ini? Sejak API 0.2.1 RS nyata (SATUSEHAT) juga
+ * bisa membawa data fasilitas/BPJS contoh, jadi asal record RS saja tidak cukup.
+ */
+export function hasSimulatedData(hospital: Hospital): boolean {
+  return (
+    hospital.data_origin === "simulation" ||
+    hospital.facility_summary.data_origin === "simulation" ||
+    hospital.bpjs_data_origin === "simulation" ||
+    hospital.services.some((s) => s.data_origin === "simulation") ||
+    hospital.beds.some((b) => b.data_origin === "simulation")
+  );
+}
+
 export function uniqueOrigins(sources: Provenance[]): DataOrigin[] {
   return [...new Set(sources.map((s) => s.data_origin))];
 }

@@ -11,7 +11,12 @@ import {
   operationalLabel,
 } from "@/lib/contracts/labels";
 import { formatWib } from "@/lib/format/time";
-import { directionsHref, safeSourceUrl, telHref } from "@/lib/hospitals/summary";
+import {
+  directionsHref,
+  hasSimulatedData,
+  safeSourceUrl,
+  telHref,
+} from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { SourceLine, StatusBadge } from "@/components/ui/badges";
@@ -101,7 +106,7 @@ export function HospitalDetail({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-4">
       {backLink}
-      {hospital.data_origin === "simulation" && <SimulationNotice />}
+      {hasSimulatedData(hospital) && <SimulationNotice />}
 
       <header className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 md:p-6">
         <div className="flex flex-col gap-1">
@@ -151,6 +156,7 @@ export function HospitalDetail({ id }: { id: string }) {
             </div>
           ))}
         </dl>
+        <SourceLine source={hospital} />
       </Section>
 
       <Section title="Ringkasan fasilitas">
@@ -168,7 +174,7 @@ export function HospitalDetail({ id }: { id: string }) {
 
       <Section title="BPJS">
         <p className="text-[16px] font-semibold">
-          <BpjsStatus accepted={summary.bpjs} long />
+          <BpjsStatus accepted={summary.bpjs} origin={hospital.bpjs_data_origin} long />
         </p>
         {(bpjsSource || bpjsUpdated) && (
           <p className="text-[12px] leading-[18px] text-muted">
@@ -193,7 +199,6 @@ export function HospitalDetail({ id }: { id: string }) {
           Informasi ini bukan jaminan kelayakan pasien; konfirmasikan ke rumah
           sakit dan BPJS.
         </p>
-        <SourceLine source={hospital} />
       </Section>
 
       <Section title="Tempat tidur">

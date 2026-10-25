@@ -104,6 +104,11 @@ export interface FacilitySummary {
     freshness: Freshness;
   };
   last_source_updated_at: string | null;
+  /**
+   * Asal angka di ringkasan (0.2.1). "simulation" = data contoh (dummy),
+   * juga pada RS nyata; wajib berlabel. null = tidak ada data sama sekali.
+   */
+  data_origin: DataOrigin | null;
 }
 
 /** Provenance pada Hospital berlaku untuk record RS (termasuk BPJS). */
@@ -124,6 +129,8 @@ export interface Hospital extends Provenance {
   phone: string | null;
   /** null = BPJS belum diketahui (bukan "tidak menerima"). */
   bpjs: boolean | null;
+  /** Asal nilai `bpjs` (0.2.1); null bila bpjs null. "simulation" = data contoh. */
+  bpjs_data_origin: DataOrigin | null;
   bpjs_source_url: string | null;
   bpjs_source_updated_at: string | null;
   /** Jarak garis lurus (Haversine), BUKAN waktu tempuh. */

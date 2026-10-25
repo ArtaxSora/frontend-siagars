@@ -31,8 +31,8 @@ export function SimulationNotice() {
       <FlaskIcon className="mt-0.5 shrink-0" />
       <span>
         <strong>Data simulasi.</strong> Rumah sakit, layanan, dan angka yang
-        berlabel Simulasi bersifat fiktif untuk demo — bukan fakta layanan
-        rumah sakit nyata.
+        berlabel Simulasi bersifat fiktif untuk demo — termasuk angka contoh
+        pada rumah sakit nyata. Bukan fakta layanan rumah sakit.
       </span>
     </p>
   );

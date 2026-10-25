@@ -5,6 +5,7 @@ import { formatDistanceKm } from "@/lib/format/beds";
 import {
   cardBeds,
   collectSources,
+  hasSimulatedData,
   isMappable,
   telHref,
   uniqueOrigins,
@@ -48,7 +49,9 @@ export function HospitalCard({
   const known = otherServices.filter((s) => s.status !== "unknown");
   const unknownCount = otherServices.length - known.length;
   // Kartu berbasis data simulasi: garis putus-putus amber, tanpa bayangan (DESIGN.md).
-  const hasSimulation = origins.includes("simulation");
+  // Sejak API 0.2.1 RS nyata bisa membawa data fasilitas/BPJS contoh.
+  const hasSimulation = hasSimulatedData(hospital);
+  if (hasSimulation && !origins.includes("simulation")) origins.push("simulation");
 
   return (
     <article
@@ -77,7 +80,10 @@ export function HospitalCard({
             {distance && <span className="tabular-nums">{distance}</span>}
           </p>
           <p className="text-[13px] font-semibold leading-4">
-            <BpjsStatus accepted={hospital.facility_summary.bpjs} />
+            <BpjsStatus
+              accepted={hospital.facility_summary.bpjs}
+              origin={hospital.bpjs_data_origin}
+            />
           </p>
         </header>
 

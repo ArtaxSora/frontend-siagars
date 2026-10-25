@@ -1,12 +1,12 @@
 # Serah Terima Backend SiagaRS v0.2 untuk Frontend
 
-Untuk: M. Tauriq Arya dan tim frontend. Dari: Akmal Bariq Yonanda (backend). Tanggal: 25 Oktober 2026. Versi API: **0.2.0** (staging, branch `develop`). Production masih **0.1.0**.
+Untuk: M. Tauriq Arya dan tim frontend. Dari: Akmal Bariq Yonanda (backend). Tanggal: 25 Oktober 2026. Versi API: **0.2.1** (staging, branch `develop`). Production masih **0.1.0**.
 
 Dokumen ini adalah pintu masuk. Rujukan lain:
 
 | Butuh | Buka |
 |---|---|
-| Daftar perubahan per versi | [`CHANGELOG.md`](CHANGELOG.md) |
+| Daftar perubahan per versi | [`CHANGELOG_API.md`](CHANGELOG_API.md) |
 | Panduan integrasi lengkap, contoh kode | [`API_FRONTEND.md`](API_FRONTEND.md) |
 | Kontrak resmi (skema, enum, contoh galat) | [`openapi.yaml`](openapi.yaml), atau UI interaktif di `/docs` |
 | Contoh respons siap tempel | [`fixtures.json`](fixtures.json) |
@@ -33,7 +33,7 @@ Dokumentasi interaktif staging memakai UI Scalar di `<STAGING_API_URL>/docs`. Ka
 |---|---|---|
 | Branch | `develop` | `main` |
 | URL | URL staging di atas (tetap sama; setiap push `develop` men-deploy ulang) | `https://siagars-backend.vercel.app` |
-| Versi API | 0.2.0 | 0.1.0 (belum ada endpoint/field 0.2) |
+| Versi API | 0.2.1 | 0.1.0 (belum ada endpoint/field 0.2) |
 | Database | `siagars_dev` | `siagars` |
 | Akses | Terkunci Vercel Authentication; perlu header bypass dari server FE | Publik |
 | Data | 30 RS simulasi + 516 RS nyata Jabodetabek (SATUSEHAT sandbox) | Belum disinkron ke 0.2 |
@@ -91,10 +91,11 @@ Dipakai di list, detail, compare, dan tujuan lookup. Field baru ditandai **baru*
   "facility_class": { "code": "B", "name": "Kelas B" },       // baru; atau null
   "facility_subtype": { "code": "10402", "name": "Rumah Sakit Khusus" }, // baru; atau null
   "operational": true,                               // baru; true/false/null
-  "bpjs": null, "bpjs_source_url": null, "bpjs_source_updated_at": null,  // baru: sumber BPJS
+  "bpjs": null, "bpjs_data_origin": null,           // baru (0.2.1): simulation | curated | null
+  "bpjs_source_url": null, "bpjs_source_updated_at": null,  // baru: sumber BPJS
   "facility_summary": {                              // baru: pakai ini untuk badge & filter
     "icu": "unknown", "nicu": "unknown", "picu": "unknown", "rawat_inap": "unknown",
-    "bpjs": null,
+    "bpjs": null, "data_origin": null,   // baru (0.2.1): "simulation" bila angka contoh
     "inpatient_beds": { "total": null, "available": null, "freshness": "unknown" },
     "last_source_updated_at": null
   },
@@ -106,7 +107,7 @@ Dipakai di list, detail, compare, dan tujuan lookup. Field baru ditandai **baru*
 ### Aturan tampilan yang wajib diikuti
 
 1. **`unknown`/`null` artinya belum diketahui, bukan "tidak ada".** Tampilkan "Belum diketahui" atau abu-abu; jangan merah/"tidak tersedia". Bed `0` adalah angka nyata (penuh), beda dari `null`.
-2. **RS nyata dari SATUSEHAT belum punya data ICU/NICU/PICU/bed/rawat inap/BPJS.** Sumbernya memang tidak menyediakan. Di staging, semua RS nyata akan menampilkan `unknown`. Ini bukan bug. Data terisi hanya bila backend sudah mengkurasi dari sumber bertanggal.
+2. **SATUSEHAT tidak menyediakan data ICU/NICU/PICU/bed/rawat inap/BPJS.** Sejak 0.2.1, RS nyata di staging diberi **data contoh (dummy)** supaya UI bisa dibangun dengan nama RS nyata. Nilainya acak-deterministik, mengikuti kelas RS, dan **bukan fakta**. Cirinya: `facility_summary.data_origin == "simulation"`, `bpjs_data_origin == "simulation"`, dan tiap item `services`/`beds` berlabel `data_origin: "simulation"`. **Wajib** tampilkan label "Simulasi". Sebagian RS tetap `unknown`/`null` (mis. bed), itu disengaja agar jalur kosong ikut teruji. Data bersumber (kurasi) akan menggantikannya nanti tanpa perubahan bentuk.
 3. **Data lengkap untuk membangun UI ada di RS simulasi**: pakai `dataset=simulation` (atau `all`). Tampilkan label "Simulasi" bila `data_origin == "simulation"`; jangan sajikan sebagai fakta RS nyata.
 4. **Kesegaran data** (`freshness`): `fresh` < 1 jam, `aging` 1-24 jam, `stale` > 24 jam, `unknown` bila tidak ada tanggal sumber. Terpisah dari asal data dan verifikasi.
 5. `facility_class.name` bisa `null`; tampilkan `code` (mis. "Kelas B" -> "B").
@@ -177,6 +178,6 @@ Pesan galat login sengaja sama untuk "email tidak ada" dan "password salah"; jan
 
 ## 10. Kontak dan alur kerja
 
-- Backend: Akmal Bariq Yonanda. Perubahan kontrak (endpoint, enum, makna `null`) harus lewat backend dan akan tercatat di [`CHANGELOG.md`](CHANGELOG.md) dengan kenaikan versi.
-- Setiap perubahan backend yang di-push ke `develop` otomatis tampil di staging; cek `CHANGELOG.md` dan `info.version` di `/docs/openapi.json` untuk melihat versi yang sedang berjalan.
+- Backend: Akmal Bariq Yonanda. Perubahan kontrak (endpoint, enum, makna `null`) harus lewat backend dan akan tercatat di [`CHANGELOG_API.md`](CHANGELOG_API.md) dengan kenaikan versi.
+- Setiap perubahan backend yang di-push ke `develop` otomatis tampil di staging; cek `CHANGELOG_API.md` dan `info.version` di `/docs/openapi.json` untuk melihat versi yang sedang berjalan.
 - Rilis ke production dilakukan backend setelah database production dimigrasi; FE akan diberi tahu.

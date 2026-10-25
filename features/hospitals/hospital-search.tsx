@@ -13,7 +13,7 @@ import {
   serializeHospitalQuery,
   type HospitalQuery,
 } from "@/lib/hospitals/query";
-import { isMappable } from "@/lib/hospitals/summary";
+import { hasSimulatedData, isMappable } from "@/lib/hospitals/summary";
 import type { Hospital } from "@/lib/contracts/types";
 import Link from "next/link";
 import { HospitalCard } from "@/features/hospitals/hospital-card";
@@ -233,7 +233,8 @@ export function HospitalSearch() {
         geoMessage={geoMessage}
       />
 
-      {query.dataset !== "real" && <SimulationNotice />}
+      {/* Dataset real pun bisa memuat data fasilitas contoh (API 0.2.1). */}
+      {(query.dataset !== "real" || items.some(hasSimulatedData)) && <SimulationNotice />}
 
       {compareIds.length > 0 && (
         <div

@@ -30,7 +30,7 @@ export const ORIGIN_LABEL: Record<DataOrigin, string> = {
 export const ORIGIN_DESCRIPTION: Record<DataOrigin, string> = {
   curated: "Dikurasi tim dari sumber lapangan atau dokumen publik.",
   simulation:
-    "Data simulasi dengan rumah sakit fiktif untuk demo; bukan fakta layanan rumah sakit nyata.",
+    "Data simulasi untuk demo: rumah sakit fiktif, atau angka contoh pada rumah sakit nyata. Bukan fakta layanan rumah sakit.",
   satusehat_sandbox:
     "Data dari lingkungan sandbox SATUSEHAT; bukan data produksi dan bisa tidak lengkap.",
   satusehat_production: "Data dari SATUSEHAT produksi (hanya bila berizin).",

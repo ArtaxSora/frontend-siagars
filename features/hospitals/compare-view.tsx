@@ -13,19 +13,12 @@ import {
   operationalLabel,
 } from "@/lib/contracts/labels";
 import { BED_CATEGORIES, type Hospital } from "@/lib/contracts/types";
-import { parseCompareIds } from "@/lib/hospitals/summary";
+import { hasSimulatedData, parseCompareIds } from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
+import { BpjsStatus, SimulatedTag } from "@/features/hospitals/facility-badges";
 import { OriginBadge, SourceLine, StatusBadge } from "@/components/ui/badges";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
-
-function bpjsText(v: boolean | null) {
-  return v === true
-    ? "Diterima menurut sumber"
-    : v === false
-      ? "Tidak diterima menurut sumber"
-      : "Belum diketahui";
-}
 
 function Table({ hospitals }: { hospitals: Hospital[] }) {
   const slugs = [
@@ -67,7 +60,11 @@ function Table({ hospitals }: { hospitals: Hospital[] }) {
             <th scope="row" className="p-3 align-top">BPJS</th>
             {hospitals.map((h) => (
               <td key={h.id} className="p-3 align-top">
-                {bpjsText(h.facility_summary.bpjs)}
+                <BpjsStatus
+                  accepted={h.facility_summary.bpjs}
+                  origin={h.bpjs_data_origin}
+                  long
+                />
               </td>
             ))}
           </tr>
@@ -96,7 +93,10 @@ function Table({ hospitals }: { hospitals: Hospital[] }) {
               <th scope="row" className="p-3 align-top">{FACILITY_LABEL[key]}</th>
               {hospitals.map((h) => (
                 <td key={h.id} className="p-3 align-top">
-                  <StatusBadge status={h.facility_summary[key]} />
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StatusBadge status={h.facility_summary[key]} />
+                    <SimulatedTag origin={h.facility_summary.data_origin} />
+                  </div>
                 </td>
               ))}
             </tr>
@@ -195,7 +195,7 @@ export function CompareView() {
   return (
     <div className="flex flex-col gap-4">
       {back}
-      {hospitals.some((h) => h.data_origin === "simulation") && <SimulationNotice />}
+      {hospitals.some(hasSimulatedData) && <SimulationNotice />}
       <Table hospitals={hospitals} />
       <CapacityDisclaimer />
     </div>

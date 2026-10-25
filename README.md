@@ -31,14 +31,15 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 ### Environment & API (mode development)
 
 Pekerjaan berjalan di branch **`develop`** dan memakai backend **staging v0.2**;
-production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md`.
+production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md` dan
+`CHANGELOG_API.md` (salinan changelog backend).
 
 | | Development (lokal) / Preview | Production |
 |---|---|---|
 | Branch FE | `develop` | `master` |
 | `API_PROXY_TARGET` | URL staging (lihat `.env.example`) | `https://siagars-backend.vercel.app` |
 | `VERCEL_AUTOMATION_BYPASS_SECRET` | wajib (dari tim backend) | kosong |
-| Versi API | 0.2.0 | 0.1.0 — **jangan** dipakai sampai backend rilis 0.2 |
+| Versi API | 0.2.1 | 0.1.0 — **jangan** dipakai sampai backend rilis 0.2 |
 
 - `/api/v1/*` ditangani route handler `app/api/v1/[...path]/route.ts`: proxy
   server-only yang menambahkan header bypass staging. Browser tetap same-origin
@@ -47,9 +48,11 @@ production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md`.
   `proxy_not_configured` (tidak ada fallback diam-diam ke production).
 - Backend hanya menerima `Origin` yang sama dengan `PUBLIC_ORIGIN` miliknya
   (staging: `http://localhost:3000`). Origin lain → login/mutasi `403 invalid_origin`.
-- Dataset bawaan UI adalah `real` (sama dengan bawaan API). RS nyata dari
-  SATUSEHAT belum punya data ICU/bed/BPJS (`unknown`); pilih dataset Simulasi
-  atau Semua data untuk melihat UI lengkap.
+- Dataset bawaan UI adalah `real` (sama dengan bawaan API). Sejak API 0.2.1,
+  RS nyata di staging membawa **data fasilitas/BPJS contoh** (bukan fakta):
+  `facility_summary.data_origin`/`bpjs_data_origin` = `"simulation"`. UI selalu
+  memberi label "Simulasi" pada nilai itu dan menampilkan pemberitahuan data
+  simulasi (`hasSimulatedData` di `lib/hospitals/summary.ts`).
 - Status backend dapat dicek di `/status` (`GET /health`, `GET /ready`).
 
 ### Deploy ke Vercel (segera)
@@ -97,7 +100,7 @@ domain Vercel FE ke `PUBLIC_ORIGIN` sebelum menguji login operator.
 
 ## Kontrak API
 
-`lib/contracts/types.ts` mengikuti OpenAPI staging **v0.2.0**
+`lib/contracts/types.ts` mengikuti OpenAPI staging **v0.2.1**
 (`<staging>/docs/openapi.json`) dan `HANDOVER_v0.2.md`. OpenAPI menang bila
 berbeda. `API_FRONTEND.md` di repo ini masih panduan v0.1.
 
