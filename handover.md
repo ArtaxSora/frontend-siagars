@@ -3,7 +3,7 @@
 Untuk: Akmal Bariq Yonanda (backend). Dari: M. Tauriq Arya (frontend). Tanggal: 25 Oktober 2026.
 Menjawab: `HANDOVER_PRODUCTION_v0.2.1` dan `HANDOVER_v0.2.md`.
 
-Ringkasnya: FE sudah menembak **backend production 0.2.1** lewat rewrite, tanpa secret bypass. Semua 19 operasi API sudah dipakai. Yang belum bisa kami uji hanya alur operator di production, karena kami belum menerima password akun uji.
+Ringkasnya: FE sudah menembak **backend production 0.2.1** lewat rewrite, tanpa secret bypass. Semua 19 operasi API sudah dipakai, termasuk alur operator yang sudah kami uji di production dengan akun `admin@gmail.com`.
 
 ## 1. Alamat FE
 
@@ -70,11 +70,15 @@ async rewrites() {
 | `GET /auth/me` tanpa sesi | `401` |
 | Halaman `/`, `/rumah-sakit`, `/bandingkan`, `/status`, `/operator/login` | 200 |
 
-**Belum diuji:** login operator sungguhan, ubah layanan/bed, `409`, dan logout di production (menunggu password).
+| Login `admin@gmail.com` → panel → beranda → kembali ke panel | Sesi tetap, panel tampil |
+| Logout lalu login lagi (3 kali berturut-turut) | Berhasil setiap kali |
+| `GET /admin/hospitals` di halaman layanan | 1 RS: RS Simulasi Siaga 01, beserta layanan dan bed |
+
+**Belum diuji dari FE:** menyimpan perubahan layanan/bed (`PATCH`) dan `409`, karena kami tidak ingin mengubah data production tanpa kesepakatan. Kode penanganannya sudah ada.
 
 ## 6. Permintaan dan pertanyaan untuk backend
 
-1. **Password akun uji `admin@gmail.com`** lewat kanal privat, supaya alur operator bisa kami uji di website production.
+1. **Uji mutasi di production.** Bolehkah kami mengubah status layanan/bed RS Simulasi Siaga 01 untuk menguji `PATCH` dan `409`? Data itu simulasi, tapi kami ingin izin dulu.
 2. **Staging membalas `503 service_unavailable`** saat kami cek tadi (dengan header bypass yang benar). Apakah memang sedang dimatikan? Kami tidak bergantung padanya sekarang, tapi butuh kabar bila staging dipakai lagi untuk uji login lokal.
 3. **Uji login lokal.** Production hanya menerima origin website, dan staging tidak bisa dipakai lewat rewrite. Apakah `http://localhost:3000` bisa ditambahkan ke `PUBLIC_ORIGIN` production, atau ada cara lain yang kalian sarankan?
 4. **Enum `bpjs_data_origin` dan `facility_summary.data_origin`.** CHANGELOG menulis `simulation | curated | null`, tetapi OpenAPI memakai seluruh enum `DataOrigin` (termasuk `satusehat_*`). FE menerima semua nilai `DataOrigin`. Mohon konfirmasi mana yang benar.
