@@ -1,0 +1,4 @@
+# Jangan pernah mengunggah secret lokal saat `vercel deploy` dari CLI.
+.env*
+!.env.example
+.vercel
