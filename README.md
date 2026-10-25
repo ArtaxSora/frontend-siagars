@@ -30,22 +30,18 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 
 ### Environment & API
 
-Pekerjaan berjalan di branch **`develop`**, yang juga menjadi **production
-branch** di Vercel (setiap push `develop` langsung ter-deploy ke Production).
-Frontend memakai backend **staging v0.2.1** di semua lingkungan, karena backend
-production masih 0.1.0. Rujukan backend: `HANDOVER_v0.2.md` dan
-`CHANGELOG_API.md` (salinan changelog backend).
+Pekerjaan berjalan di branch **`develop`**. Frontend memakai **backend
+production** `https://siagars-backend.vercel.app` (API 0.2.1, publik) di semua
+lingkungan: lokal, Preview, dan Production Vercel. Rujukan backend:
+`HANDOVER_v0.2.md` dan `CHANGELOG_API.md` (salinan changelog backend).
 
-| | Lokal | Vercel (Preview & Production) |
+| Variabel | Backend production (dipakai) | Backend staging (opsional) |
 |---|---|---|
-| Branch FE | `develop` | `develop` → Production |
-| `API_PROXY_TARGET` | URL staging (lihat `.env.example`) | URL staging |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | wajib (dari tim backend) | wajib (env Secret di Vercel) |
-| Versi API | 0.2.1 | 0.2.1 |
+| `API_PROXY_TARGET` | `https://siagars-backend.vercel.app` | URL staging (lihat `.env.example`) |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | kosong | wajib (dari tim backend) |
 
-Backend production (`https://siagars-backend.vercel.app`, 0.1.0) **jangan**
-dipakai sampai backend merilis 0.2; ganti `API_PROXY_TARGET` (dan kosongkan
-secret) di env Production Vercel saat rilis itu tiba.
+Pindah backend cukup dengan mengganti env (lokal: `.env.local`; Vercel: env per
+lingkungan) lalu redeploy; kode tidak perlu diubah.
 
 - `/api/v1/*` ditangani route handler `app/api/v1/[...path]/route.ts`: proxy
   server-only yang menambahkan header bypass staging. Browser tetap same-origin
@@ -53,9 +49,10 @@ secret) di env Production Vercel saat rilis itu tiba.
 - `API_PROXY_TARGET` wajib diisi; bila kosong proxy membalas
   `proxy_not_configured` (tidak ada fallback diam-diam ke production).
 - Backend hanya menerima `Origin` yang sama dengan `PUBLIC_ORIGIN` miliknya
-  (staging: `http://localhost:3000`). Origin lain → login/mutasi `403 invalid_origin`.
+  Origin FE lain → login/mutasi `403 invalid_origin`; minta tim backend
+  mendaftarkan origin yang dipakai (lokal dan domain Vercel).
 - Dataset bawaan UI adalah `real` (sama dengan bawaan API). Sejak API 0.2.1,
-  RS nyata di staging membawa **data fasilitas/BPJS contoh** (bukan fakta):
+  RS nyata membawa **data fasilitas/BPJS contoh** (bukan fakta):
   `facility_summary.data_origin`/`bpjs_data_origin` = `"simulation"`. UI selalu
   memberi label "Simulasi" pada nilai itu dan menampilkan pemberitahuan data
   simulasi (`hasSimulatedData` di `lib/hospitals/summary.ts`).
@@ -63,11 +60,12 @@ secret) di env Production Vercel saat rilis itu tiba.
 
 ### Deploy ke Vercel
 
-Project Vercel: `artax-sora/frontend-siagars`, terhubung ke repo GitHub. Push ke
-`develop` = deploy Production otomatis; deploy manual: `vercel deploy --prod`
+Project Vercel: `artax-sora/frontend-siagars` (https://frontend-siagars.vercel.app),
+terhubung ke repo GitHub. Push memicu deploy otomatis sesuai *Production Branch*
+di pengaturan Vercel; deploy manual ke Production: `vercel deploy --prod`
 (`.vercelignore` mencegah `.env.local` ikut terunggah). Login operator di domain
 Vercel baru berfungsi setelah tim backend menambahkan origin domain itu ke
-`PUBLIC_ORIGIN` staging.
+`PUBLIC_ORIGIN` backend.
 
 ### Kode demo
 
