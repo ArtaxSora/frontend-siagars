@@ -63,7 +63,7 @@ export default function HomePage() {
           />
           <button
             type="submit"
-            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-brand px-5 text-[14px] font-semibold text-white hover:bg-brand-deep"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-md bg-brand md:min-h-10 px-5 text-[14px] font-semibold text-white hover:bg-brand-deep"
           >
             <SearchIcon /> Cari
           </button>
@@ -76,7 +76,7 @@ export default function HomePage() {
               <li key={l.href}>
                 <Link
                   href={l.href}
-                  className="inline-flex min-h-9 items-center rounded-lg border border-line bg-well px-3 text-[13px] font-semibold text-muted hover:border-line-strong"
+                  className="inline-flex min-h-11 items-center rounded-lg border md:min-h-9 border-line bg-well px-3 text-[13px] font-semibold text-muted hover:border-line-strong"
                 >
                   {l.label}
                 </Link>

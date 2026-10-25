@@ -17,7 +17,7 @@ const VARIANT: Record<ButtonVariant, string> = {
 };
 
 export function buttonClasses(variant: ButtonVariant = "primary"): string {
-  return `inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT[variant]}`;
+  return `inline-flex min-h-11 items-center justify-center md:min-h-10 gap-2 rounded-md px-4 text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT[variant]}`;
 }
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

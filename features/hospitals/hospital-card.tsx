@@ -157,7 +157,7 @@ export function HospitalCard({
 
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {compare && (
-            <label className="inline-flex min-h-9 cursor-pointer items-center gap-2 text-[13px] font-semibold">
+            <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-[13px] font-semibold md:min-h-9">
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-[var(--color-brand)]"

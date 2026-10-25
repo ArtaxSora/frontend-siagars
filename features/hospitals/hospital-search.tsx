@@ -248,7 +248,7 @@ export function HospitalSearch() {
           {compareIds.length >= 2 ? (
             <Link
               href={`/bandingkan?ids=${compareIds.join(",")}`}
-              className="inline-flex min-h-10 items-center rounded-md bg-brand px-4 font-semibold text-white"
+              className="inline-flex min-h-11 items-center rounded-md bg-brand px-4 font-semibold text-white md:min-h-10"
             >
               Bandingkan
             </Link>

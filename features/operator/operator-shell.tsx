@@ -121,7 +121,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
-                className={`inline-flex min-h-10 items-center rounded-md px-3 font-semibold ${
+                className={`inline-flex min-h-11 items-center rounded-md px-3 font-semibold md:min-h-10 ${
                   pathname === item.href
                     ? "bg-brand text-white"
                     : "bg-well text-muted hover:bg-line"

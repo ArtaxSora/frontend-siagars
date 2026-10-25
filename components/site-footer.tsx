@@ -18,7 +18,10 @@ export function SiteFooter() {
           .
         </p>
         <p>
-          <Link href="/status" className="font-semibold text-trust underline">
+          <Link
+            href="/status"
+            className="inline-flex min-h-11 items-center font-semibold text-trust underline md:min-h-0"
+          >
             Status sistem
           </Link>
         </p>

@@ -51,7 +51,7 @@ export function HospitalDetail({ id }: { id: string }) {
   const backLink = (
     <Link
       href="/rumah-sakit"
-      className="inline-flex min-h-10 items-center text-[14px] font-semibold text-trust hover:underline"
+      className="inline-flex min-h-11 items-center text-[14px] font-semibold text-trust hover:underline md:min-h-10"
     >
       ← Kembali ke pencarian
     </Link>

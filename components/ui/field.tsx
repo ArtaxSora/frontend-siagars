@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export const inputClasses =
-  "block min-h-10 w-full rounded-md border border-line-strong bg-surface px-3 text-[14px] leading-5 text-ink placeholder:text-faint focus-visible:border-2 focus-visible:border-brand";
+  "block min-h-11 w-full md:min-h-10 rounded-md border border-line-strong bg-surface px-3 text-[14px] leading-5 text-ink placeholder:text-faint focus-visible:border-2 focus-visible:border-brand";
 
 /** Label + kontrol + petunjuk/galat, saling terhubung untuk pembaca layar. */
 export function Field({

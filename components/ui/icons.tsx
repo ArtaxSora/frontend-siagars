@@ -101,3 +101,15 @@ export const ClockIcon = (p: IconProps) => (
     <path d="M10 6v4.5l3 1.5" />
   </Base>
 );
+
+export const MenuIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+  </Base>
+);
+
+export const FilterIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 5h14M6 10h8M8.5 15h3" />
+  </Base>
+);

@@ -8,7 +8,8 @@ export function PrototypeBanner() {
   return (
     <div
       role="note"
-      className="sticky top-0 z-40 border-b border-banner-line bg-banner-bg"
+      // Sticky hanya md+: di ponsel banner dua baris akan memakan layar terus-menerus.
+      className="border-b border-banner-line bg-banner-bg md:sticky md:top-0 md:z-40"
     >
       <p className="mx-auto flex max-w-[1280px] items-start gap-2 px-4 py-2 text-[12px] font-semibold leading-[18px] text-banner-fg md:px-8">
         <AlertIcon className="mt-0.5 shrink-0" />
