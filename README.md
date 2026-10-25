@@ -15,7 +15,7 @@ Sumber acuan: `PRD.md` dan `AGENTS.md` (instruksi agen) serta
 
 ```bash
 npm install
-cp .env.example .env.local   # wajib: isi VERCEL_AUTOMATION_BYPASS_SECRET
+cp .env.example .env.local   # opsional; bawaan = backend production
 npm run dev                  # http://localhost:3000
 ```
 
@@ -33,24 +33,20 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 Pekerjaan berjalan di branch **`develop`**. Frontend memakai **backend
 production** `https://siagars-backend.vercel.app` (API 0.2.1, publik) di semua
 lingkungan: lokal, Preview, dan Production Vercel. Rujukan backend:
-`HANDOVER_v0.2.md` dan `CHANGELOG_API.md` (salinan changelog backend).
+`HANDOVER_PRODUCTION_v0.2.1` dari backend, `HANDOVER_v0.2.md`, dan
+`CHANGELOG_API.md` (salinan changelog backend). Serah terima FE → BE:
+`handover.md`.
 
-| Variabel | Backend production (dipakai) | Backend staging (opsional) |
-|---|---|---|
-| `API_PROXY_TARGET` | `https://siagars-backend.vercel.app` | URL staging (lihat `.env.example`) |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | kosong | wajib (dari tim backend) |
-
-Pindah backend cukup dengan mengganti env (lokal: `.env.local`; Vercel: env per
-lingkungan) lalu redeploy; kode tidak perlu diubah.
-
-- `/api/v1/*` ditangani route handler `app/api/v1/[...path]/route.ts`: proxy
-  server-only yang menambahkan header bypass staging. Browser tetap same-origin
-  sehingga cookie sesi operator bekerja, dan secret tidak pernah sampai ke browser.
-- `API_PROXY_TARGET` wajib diisi; bila kosong proxy membalas
-  `proxy_not_configured` (tidak ada fallback diam-diam ke production).
-- Backend hanya menerima `Origin` yang sama dengan `PUBLIC_ORIGIN` miliknya
-  Origin FE lain → login/mutasi `403 invalid_origin`; minta tim backend
-  mendaftarkan origin yang dipakai (lokal dan domain Vercel).
+- `next.config.ts` me-*rewrite* `/api/v1/*` ke `API_BASE_URL` (server-only;
+  bawaan `https://siagars-backend.vercel.app`). Browser tetap same-origin
+  sehingga cookie sesi operator (`Path=/api/v1`) bekerja dan backend tidak perlu
+  CORS. Tidak ada header bypass di kode mana pun.
+- Pindah backend cukup dengan mengganti `API_BASE_URL` (lokal: `.env.local`;
+  Vercel: env per lingkungan) lalu redeploy. Staging backend terkunci Vercel
+  Authentication sehingga **tidak** bisa dipakai lewat rewrite ini.
+- Login operator production hanya diterima dari origin
+  `https://frontend-siagars.vercel.app` (`PUBLIC_ORIGIN` backend). Dari
+  `http://localhost:3000` login/mutasi ditolak `403`; bagian publik tetap jalan.
 - Dataset bawaan UI adalah `real` (sama dengan bawaan API). Sejak API 0.2.1,
   RS nyata membawa **data fasilitas/BPJS contoh** (bukan fakta):
   `facility_summary.data_origin`/`bpjs_data_origin` = `"simulation"`. UI selalu
