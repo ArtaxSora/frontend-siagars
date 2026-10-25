@@ -1,14 +1,13 @@
 import type { NextConfig } from "next";
+import { backendBaseUrl } from "./lib/api/backend";
 
 /**
  * /api/v1/* di-rewrite ke backend (HANDOVER_PRODUCTION_v0.2.1 §2): browser
  * hanya bicara ke origin FE, jadi cookie sesi operator (Path=/api/v1) bekerja
- * dan backend tidak perlu CORS. Tanpa header bypass: production publik.
- * Server-only (tanpa NEXT_PUBLIC_); bawaan = backend production.
+ * dan backend tidak perlu CORS. Server-only (tanpa NEXT_PUBLIC_); bawaan =
+ * backend production. Staging (terkunci) ditangani proxy.ts lebih dulu.
  */
-const API_BASE_URL = (
-  process.env.API_BASE_URL || "https://siagars-backend.vercel.app"
-).replace(/\/+$/, "");
+const API_BASE_URL = backendBaseUrl();
 
 const nextConfig: NextConfig = {
   // Dev server dibuka lewat IP jaringan lokal (mis. dari HP); tanpa ini HMR diblokir.

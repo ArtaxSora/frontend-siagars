@@ -19,8 +19,8 @@ cp .env.example .env.local   # opsional; bawaan = backend production
 npm run dev                  # http://localhost:3000
 ```
 
-Buka lewat `http://localhost:3000` persis: backend staging hanya menerima login
-dan mutasi operator dari origin itu.
+Buka lewat `http://localhost:3000` persis: login dan mutasi operator hanya
+diterima dari origin yang terdaftar di backend (`PUBLIC_ORIGIN`).
 
 Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
 
@@ -30,9 +30,9 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 
 ### Environment & API
 
-Pekerjaan berjalan di branch **`develop`**. Frontend memakai **backend
-production** `https://siagars-backend.vercel.app` (API 0.2.1, publik) di semua
-lingkungan: lokal, Preview, dan Production Vercel. Rujukan backend:
+Pekerjaan berjalan di branch **`develop`**. Vercel (Preview dan Production)
+memakai **backend production** `https://siagars-backend.vercel.app` (API 0.2.1,
+publik); lokal bisa memilih production atau staging lewat `.env.local`. Rujukan backend:
 `HANDOVER_PRODUCTION_v0.2.1` dari backend, `HANDOVER_v0.2.md`, dan
 `CHANGELOG_API.md` (salinan changelog backend). Serah terima FE → BE:
 `handover.md`.
@@ -40,13 +40,17 @@ lingkungan: lokal, Preview, dan Production Vercel. Rujukan backend:
 - `next.config.ts` me-*rewrite* `/api/v1/*` ke `API_BASE_URL` (server-only;
   bawaan `https://siagars-backend.vercel.app`). Browser tetap same-origin
   sehingga cookie sesi operator (`Path=/api/v1`) bekerja dan backend tidak perlu
-  CORS. Tidak ada header bypass di kode mana pun.
-- Pindah backend cukup dengan mengganti `API_BASE_URL` (lokal: `.env.local`;
-  Vercel: env per lingkungan) lalu redeploy. Staging backend terkunci Vercel
-  Authentication sehingga **tidak** bisa dipakai lewat rewrite ini.
-- Login operator production hanya diterima dari origin
-  `https://frontend-siagars.vercel.app` (`PUBLIC_ORIGIN` backend). Dari
-  `http://localhost:3000` login/mutasi ditolak `403`; bagian publik tetap jalan.
+  CORS.
+- Pindah backend cukup dengan mengganti `API_BASE_URL` (lokal: `.env.local`,
+  lalu restart dev server; Vercel: env per lingkungan, lalu redeploy). Halaman
+  `/status` menampilkan backend yang dipakai: **Production** atau **Staging**.
+- Staging terkunci Vercel Authentication: isi juga
+  `VERCEL_AUTOMATION_BYPASS_SECRET`. `proxy.ts` lalu me-rewrite `/api/v1` ke
+  staging dengan header bypass (server-only). Untuk production header ini
+  tidak pernah dipasang, walaupun secret masih terisi.
+- Login operator hanya diterima dari origin yang terdaftar di `PUBLIC_ORIGIN`
+  backend (`https://frontend-siagars.vercel.app`; per 25 Okt 2026 juga
+  `http://localhost:3000`). Origin lain → `403 invalid_origin`.
 - Dataset bawaan UI adalah `real` (sama dengan bawaan API). Sejak API 0.2.1,
   RS nyata membawa **data fasilitas/BPJS contoh** (bukan fakta):
   `facility_summary.data_origin`/`bpjs_data_origin` = `"simulation"`. UI selalu

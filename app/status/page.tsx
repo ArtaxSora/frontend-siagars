@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { backendBaseUrl, describeBackend } from "@/lib/api/backend";
 import { SystemStatus } from "@/features/system/system-status";
 
 export const metadata: Metadata = {
@@ -18,7 +19,8 @@ export default function SystemStatusPage() {
         memastikan apakah gangguan berasal dari server. Server yang baru
         bangun (cold start) bisa membutuhkan beberapa detik.
       </p>
-      <SystemStatus />
+      {/* Hanya label + hostname yang diteruskan ke klien; env tetap di server. */}
+      <SystemStatus backend={describeBackend(backendBaseUrl())} />
     </div>
   );
 }

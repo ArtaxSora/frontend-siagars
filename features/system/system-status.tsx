@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { ApiError } from "@/lib/api/client";
+import type { BackendEnvironment, BackendInfo } from "@/lib/api/backend";
 import { getHealth, getReady } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
 import { formatWib } from "@/lib/format/time";
@@ -41,15 +42,47 @@ const STATE_LABEL: Record<ProbeState, string> = {
   down: "Bermasalah",
 };
 
+const ENV_LABEL: Record<BackendEnvironment, string> = {
+  production: "Production",
+  staging: "Staging",
+  custom: "Lainnya",
+};
+
+const ENV_STYLE: Record<BackendEnvironment, string> = {
+  production: "bg-trust-wash text-trust border-trust",
+  staging: "bg-warn-bg text-warn-fg border-warn-line",
+  custom: "bg-unk-bg text-unk-fg border-unk-line",
+};
+
+/** Backend mana yang sedang dipakai (dari API_BASE_URL di server). */
+function BackendLine({ backend }: { backend: BackendInfo }) {
+  return (
+    <dl className="grid grid-cols-[max-content_1fr] items-center gap-x-4 gap-y-1 rounded-md bg-well px-3 py-2 text-[14px]">
+      <dt className="text-muted">Lingkungan</dt>
+      <dd>
+        <span
+          className={`inline-flex rounded-full border px-2.5 py-0.5 text-[12px] font-bold ${ENV_STYLE[backend.environment]}`}
+        >
+          {ENV_LABEL[backend.environment]}
+        </span>
+      </dd>
+      <dt className="text-muted">Alamat</dt>
+      <dd className="break-all font-mono text-[13px]">{backend.host}</dd>
+    </dl>
+  );
+}
+
 function ProbeCard({
   title,
   description,
+  extra,
   data,
   error,
   loading,
 }: {
   title: string;
   description: string;
+  extra?: ReactNode;
   data: ProbeResult | null;
   error: ApiError | null;
   loading: boolean;
@@ -70,6 +103,7 @@ function ProbeCard({
         </span>
       </div>
       <p className="text-muted">{description}</p>
+      {extra}
       {state === "down" && error && (
         <div className="flex flex-col gap-1">
           <p className="text-ink">{describeApiError(error)}</p>
@@ -99,7 +133,7 @@ function ProbeCard({
   );
 }
 
-export function SystemStatus() {
+export function SystemStatus({ backend }: { backend: BackendInfo }) {
   // Satu kunci untuk kedua probe agar "Periksa ulang" memicu keduanya.
   const [round, setRound] = useState(0);
   const key = `status-${round}`;
@@ -113,6 +147,7 @@ export function SystemStatus() {
         <ProbeCard
           title="Server API"
           description="Proses backend hidup dan menjawab permintaan. Tidak memeriksa database."
+          extra={<BackendLine backend={backend} />}
           data={health.data}
           error={health.error}
           loading={health.loading}
