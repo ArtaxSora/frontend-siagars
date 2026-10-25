@@ -15,9 +15,12 @@ Sumber acuan: `PRD.md` dan `AGENTS.md` (instruksi agen) serta
 
 ```bash
 npm install
-cp .env.example .env.local   # opsional
+cp .env.example .env.local   # wajib: isi VERCEL_AUTOMATION_BYPASS_SECRET
 npm run dev                  # http://localhost:3000
 ```
+
+Buka lewat `http://localhost:3000` persis: backend staging hanya menerima login
+dan mutasi operator dari origin itu.
 
 Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
 
@@ -25,19 +28,36 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 > `partialPrefetching` aktif. Baca `node_modules/next/dist/docs/` (lihat
 > `AGENTS.md`) sebelum mengubah pola data/caching.
 
-### API online
+### Environment & API (mode development)
 
-Frontend memakai backend online `https://siagars-backend.vercel.app`
-(dokumentasi: `/docs`, OpenAPI: `/docs/openapi.json`). Tidak ada lagi mock.
+Pekerjaan berjalan di branch **`develop`** dan memakai backend **staging v0.2**;
+production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md`.
 
-- `next.config.ts` meneruskan (rewrite) `/api/v1/*` ke backend, sehingga browser
-  tetap same-origin dan cookie sesi (`Path=/api/v1`) bekerja. Ganti target lewat
-  `API_PROXY_TARGET` (server-only).
-- **Penting:** backend hanya menerima `Origin` yang sama dengan `PUBLIC_ORIGIN`
-  miliknya. Origin frontend yang dipakai (mis. `http://localhost:3000`) harus
-  didaftarkan di backend, kalau tidak login dan mutasi ditolak.
-- Dataset bawaan UI adalah `simulation` (RS fiktif demo), berbeda dari bawaan API
-  (`real`). Ubah di `DEFAULT_DATASET` (`lib/hospitals/query.ts`) bila perlu.
+| | Development (lokal) / Preview | Production |
+|---|---|---|
+| Branch FE | `develop` | `master` |
+| `API_PROXY_TARGET` | URL staging (lihat `.env.example`) | `https://siagars-backend.vercel.app` |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | wajib (dari tim backend) | kosong |
+| Versi API | 0.2.0 | 0.1.0 — **jangan** dipakai sampai backend rilis 0.2 |
+
+- `/api/v1/*` ditangani route handler `app/api/v1/[...path]/route.ts`: proxy
+  server-only yang menambahkan header bypass staging. Browser tetap same-origin
+  sehingga cookie sesi operator bekerja, dan secret tidak pernah sampai ke browser.
+- `API_PROXY_TARGET` wajib diisi; bila kosong proxy membalas
+  `proxy_not_configured` (tidak ada fallback diam-diam ke production).
+- Backend hanya menerima `Origin` yang sama dengan `PUBLIC_ORIGIN` miliknya
+  (staging: `http://localhost:3000`). Origin lain → login/mutasi `403 invalid_origin`.
+- Dataset bawaan UI adalah `real` (sama dengan bawaan API). RS nyata dari
+  SATUSEHAT belum punya data ICU/bed/BPJS (`unknown`); pilih dataset Simulasi
+  atau Semua data untuk melihat UI lengkap.
+- Status backend dapat dicek di `/status` (`GET /health`, `GET /ready`).
+
+### Deploy ke Vercel (segera)
+
+Belum dilakukan. Saat siap: hubungkan repo ke Vercel, set env per lingkungan
+sesuai tabel di atas (Preview = `develop` → staging + secret; Production =
+`master` → production tanpa secret), lalu minta tim backend menambahkan origin
+domain Vercel FE ke `PUBLIC_ORIGIN` sebelum menguji login operator.
 
 ### Kode demo
 
@@ -54,9 +74,10 @@ Frontend memakai backend online `https://siagars-backend.vercel.app`
 | `/lacak-rujukan` | Lookup kode via POST body (tidak di URL/storage) + timeline demo |
 | `/bandingkan` | Perbandingan 2–3 RS (`GET /hospitals/compare`) |
 | `/tentang-data` | Cakupan pilot, asal data, arti waktu, batas kesegaran, jarak |
+| `/status` | Status server API & database (`/health`, `/ready`) |
 | `/operator/login`, `/operator/rujukan`, `/operator/layanan` | Panel operator minimum |
 
-`/bandingkan?ids=a,b[,c]` membandingkan 2–3 RS (pilih lewat kotak "Bandingkan" di kartu hasil).
+`/bandingkan?ids=a,b[,c]` membandingkan 2–3 RS; tiap ID boleh UUID atau `external_id` (pilih lewat kotak "Bandingkan" di kartu hasil).
 
 ## Aturan penting yang dijaga kode
 
@@ -76,11 +97,9 @@ Frontend memakai backend online `https://siagars-backend.vercel.app`
 
 ## Kontrak API
 
-`lib/contracts/types.ts` mengikuti *SiagaRS API v0.1 — Panduan Integrasi
-Frontend*. Berkas ini ditulis tanpa bisa mengakses backend dari lingkungan
-pengembangan, jadi **cocokkan dengan `/docs/openapi.json`** — OpenAPI menang bila
-berbeda. Hal yang perlu dicek: nama field provenance, kode wilayah (diteruskan
-apa adanya dari respons), dan batas `limit`.
+`lib/contracts/types.ts` mengikuti OpenAPI staging **v0.2.0**
+(`<staging>/docs/openapi.json`) dan `HANDOVER_v0.2.md`. OpenAPI menang bila
+berbeda. `API_FRONTEND.md` di repo ini masih panduan v0.1.
 
 ## Struktur
 
