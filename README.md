@@ -28,18 +28,24 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 > `partialPrefetching` aktif. Baca `node_modules/next/dist/docs/` (lihat
 > `AGENTS.md`) sebelum mengubah pola data/caching.
 
-### Environment & API (mode development)
+### Environment & API
 
-Pekerjaan berjalan di branch **`develop`** dan memakai backend **staging v0.2**;
-production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md` dan
+Pekerjaan berjalan di branch **`develop`**, yang juga menjadi **production
+branch** di Vercel (setiap push `develop` langsung ter-deploy ke Production).
+Frontend memakai backend **staging v0.2.1** di semua lingkungan, karena backend
+production masih 0.1.0. Rujukan backend: `HANDOVER_v0.2.md` dan
 `CHANGELOG_API.md` (salinan changelog backend).
 
-| | Development (lokal) / Preview | Production |
+| | Lokal | Vercel (Preview & Production) |
 |---|---|---|
-| Branch FE | `develop` | `master` |
-| `API_PROXY_TARGET` | URL staging (lihat `.env.example`) | `https://siagars-backend.vercel.app` |
-| `VERCEL_AUTOMATION_BYPASS_SECRET` | wajib (dari tim backend) | kosong |
-| Versi API | 0.2.1 | 0.1.0 — **jangan** dipakai sampai backend rilis 0.2 |
+| Branch FE | `develop` | `develop` → Production |
+| `API_PROXY_TARGET` | URL staging (lihat `.env.example`) | URL staging |
+| `VERCEL_AUTOMATION_BYPASS_SECRET` | wajib (dari tim backend) | wajib (env Secret di Vercel) |
+| Versi API | 0.2.1 | 0.2.1 |
+
+Backend production (`https://siagars-backend.vercel.app`, 0.1.0) **jangan**
+dipakai sampai backend merilis 0.2; ganti `API_PROXY_TARGET` (dan kosongkan
+secret) di env Production Vercel saat rilis itu tiba.
 
 - `/api/v1/*` ditangani route handler `app/api/v1/[...path]/route.ts`: proxy
   server-only yang menambahkan header bypass staging. Browser tetap same-origin
@@ -55,12 +61,13 @@ production (`master`) belum disentuh. Rujukan backend: `HANDOVER_v0.2.md` dan
   simulasi (`hasSimulatedData` di `lib/hospitals/summary.ts`).
 - Status backend dapat dicek di `/status` (`GET /health`, `GET /ready`).
 
-### Deploy ke Vercel (segera)
+### Deploy ke Vercel
 
-Belum dilakukan. Saat siap: hubungkan repo ke Vercel, set env per lingkungan
-sesuai tabel di atas (Preview = `develop` → staging + secret; Production =
-`master` → production tanpa secret), lalu minta tim backend menambahkan origin
-domain Vercel FE ke `PUBLIC_ORIGIN` sebelum menguji login operator.
+Project Vercel: `artax-sora/frontend-siagars`, terhubung ke repo GitHub. Push ke
+`develop` = deploy Production otomatis; deploy manual: `vercel deploy --prod`
+(`.vercelignore` mencegah `.env.local` ikut terunggah). Login operator di domain
+Vercel baru berfungsi setelah tim backend menambahkan origin domain itu ke
+`PUBLIC_ORIGIN` staging.
 
 ### Kode demo
 
