@@ -11,7 +11,8 @@ const LINKS = [
   { href: "/tentang-data", label: "Tentang data" },
 ] as const;
 
-const OPERATOR_LINK = { href: "/operator/login", label: "Operator" } as const;
+// /operator -> panel bila sesi aktif, atau ke halaman login bila belum.
+const OPERATOR_LINK = { href: "/operator", label: "Operator" } as const;
 
 function isActive(pathname: string | null, href: string): boolean {
   if (pathname === null) return false;

@@ -259,7 +259,8 @@ export interface Operator {
 }
 
 export interface LoginResult {
-  csrf_token: string;
+  /** "bila tersedia" (handover production §5); bila kosong ambil via GET /auth/csrf. */
+  csrf_token?: string;
   expires_at: string;
 }
 
