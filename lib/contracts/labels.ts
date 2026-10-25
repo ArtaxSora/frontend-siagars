@@ -4,6 +4,7 @@
  */
 import type {
   BedCategory,
+  BpjsParticipantStatus,
   Coded,
   DataOrigin,
   FacilitySummary,
@@ -111,3 +112,8 @@ export function operationalLabel(value: boolean | null): string {
   if (value === false) return "Tidak beroperasi menurut sumber";
   return "Belum diketahui";
 }
+
+export const BPJS_PARTICIPANT_STATUS_LABEL: Record<BpjsParticipantStatus, string> = {
+  active: "Aktif",
+  inactive: "Tidak aktif",
+};

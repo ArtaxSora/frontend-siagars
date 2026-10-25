@@ -4,6 +4,8 @@
  */
 import { apiRequest } from "@/lib/api/client";
 import type {
+  BpjsCheckRequest,
+  BpjsCheckResult,
   CompareMeta,
   CountMeta,
   CsrfResult,
@@ -83,6 +85,18 @@ export function lookupReferral(trackingCode: string, signal?: AbortSignal) {
   return apiRequest<TrackingResult>("/referrals/lookup", {
     method: "POST",
     body: { tracking_code: trackingCode },
+    signal,
+  });
+}
+
+/**
+ * Cek kepesertaan BPJS (SIMULASI). NIK, nama, dan tanggal lahir hanya lewat
+ * BODY POST; tidak pernah di URL/query, storage, atau log.
+ */
+export function checkBpjs(body: BpjsCheckRequest, signal?: AbortSignal) {
+  return apiRequest<BpjsCheckResult>("/bpjs/check", {
+    method: "POST",
+    body,
     signal,
   });
 }

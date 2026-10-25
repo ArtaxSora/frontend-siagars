@@ -279,3 +279,41 @@ export interface HealthResult {
 export interface ReadyResult {
   status: "ready";
 }
+
+/* ---------------- Cek BPJS (simulasi; kontrak diusulkan FE, lihat handover-bpjs.md) ---------------- */
+
+export const BPJS_PARTICIPANT_STATUSES = ["active", "inactive"] as const;
+export type BpjsParticipantStatus = (typeof BPJS_PARTICIPANT_STATUSES)[number];
+
+/** Body POST /bpjs/check. Data pribadi hanya lewat body, tidak pernah di URL. */
+export interface BpjsCheckRequest {
+  /** 16 digit angka. */
+  nik: string;
+  name: string;
+  /** YYYY-MM-DD. */
+  birth_date: string;
+}
+
+/** Identitas yang dikembalikan selalu disamarkan oleh server. */
+export interface BpjsParticipant {
+  nik_masked: string;
+  name_masked: string;
+  status: BpjsParticipantStatus;
+  /** Alasan tidak aktif (mis. tunggakan iuran); null bila aktif/tidak diketahui. */
+  inactive_reason: string | null;
+  /** Jenis kepesertaan, mis. {code:"PBI", name:"Penerima Bantuan Iuran"}. */
+  membership_type: Coded | null;
+  /** Kelas rawat "1" | "2" | "3"; null bila tidak diketahui. */
+  care_class: string | null;
+  /** Faskes tingkat pertama terdaftar. */
+  primary_facility: { code: string; name: string } | null;
+}
+
+export interface BpjsCheckResult {
+  /** "not_found" = data tidak cocok dengan peserta mana pun (bukan galat). */
+  result: "found" | "not_found";
+  participant: BpjsParticipant | null;
+  /** Selalu "simulation" sampai ada integrasi resmi. */
+  data_origin: DataOrigin;
+  checked_at: string;
+}

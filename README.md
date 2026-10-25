@@ -76,6 +76,7 @@ Vercel baru berfungsi setelah tim backend menambahkan origin domain itu ke
 | `/rumah-sakit` | Pencarian + filter + daftar & peta; semua filter tersimpan di URL |
 | `/rumah-sakit/[id]` | Detail: BPJS, tempat tidur, layanan; sumber & waktu per informasi |
 | `/lacak-rujukan` | Lookup kode via POST body (tidak di URL/storage) + timeline demo |
+| `/cek-bpjs` | **Simulasi** cek kepesertaan BPJS (NIK, nama, tgl lahir via POST body; kontrak diusulkan di `handover-bpjs.md`, menunggu backend) |
 | `/bandingkan` | Perbandingan 2–3 RS (`GET /hospitals/compare`) |
 | `/tentang-data` | Cakupan pilot, asal data, arti waktu, batas kesegaran, jarak |
 | `/status` | Status server API & database (`/health`, `/ready`) |

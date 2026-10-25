@@ -8,6 +8,7 @@ import { CrossIcon, MenuIcon } from "@/components/ui/icons";
 const LINKS = [
   { href: "/rumah-sakit", label: "Cari rumah sakit" },
   { href: "/lacak-rujukan", label: "Lacak rujukan" },
+  { href: "/cek-bpjs", label: "Cek BPJS" },
   { href: "/tentang-data", label: "Tentang data" },
 ] as const;
 
