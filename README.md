@@ -1,15 +1,18 @@
 # SiagaRS — Frontend
 
 Frontend Next.js (App Router, TypeScript, Tailwind v4) untuk **SiagaRS**: membantu
-keluarga pasien mencari rumah sakit berdasarkan fasilitas yang *dinyatakan*
-tersedia, memeriksa sumber dan umur informasinya, menghubungi RS, dan melihat
-progres rujukan **simulasi**. Subtema: Public Service Tracking.
+keluarga pasien **memutuskan rumah sakit yang tepat** dengan data fasilitas yang
+transparan — setiap angka punya sumber, umur, dan tingkat kepastian.
+Sub-tema: **Data-Driven Decision Support**.
 
-> **Prototipe.** Data pilot terbatas, bukan layanan resmi gawat darurat.
-> Baseline: PRD v0.1 (23 Oktober 2026). Tim MalasNgoding.
+> **Prototipe.** Data pilot terbatas, bukan layanan gawat darurat — darurat: **112**.
+> Versi **0.4.0** (Decision Core), dirilis berpasangan dengan backend dengan tag
+> `vX.Y.Z` yang sama. Tim MalasNgoding.
 
-Sumber acuan: `PRD.md` dan `AGENTS.md` (instruksi agen) serta
-`template-web/DESIGN.md` untuk token visual.
+Sumber acuan: folder [`new/`](new/README.md) — [PRD FE](new/PRD.md),
+[aturan kerja](new/AGENTS.md), [roadmap & tiket](new/02_ROADMAP_PHASE_VERSI.md),
+[kontrak API v1](new/03_KONTRAK_API_v1.md). Dokumen lama ada di
+[`docs/archive/`](docs/archive/README.md) dan tidak lagi diikuti.
 
 ## Menjalankan
 
@@ -23,6 +26,7 @@ Buka lewat `http://localhost:3000` persis: login dan mutasi operator hanya
 diterima dari origin yang terdaftar di backend (`PUBLIC_ORIGIN`).
 
 Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run build`.
+Keempatnya dijalankan CI (`.github/workflows/ci.yml`) di setiap push & PR.
 
 > Catatan versi: proyek memakai Next.js 16.4.3 dengan `cacheComponents` dan
 > `partialPrefetching` aktif. Baca `node_modules/next/dist/docs/` (lihat
@@ -31,11 +35,11 @@ Perintah lain: `npm run lint`, `npm run typecheck`, `npm run test`, `npm run bui
 ### Environment & API
 
 Pekerjaan berjalan di branch **`develop`**. Vercel (Preview dan Production)
-memakai **backend production** `https://siagars-backend.vercel.app` (API 0.2.1,
-publik); lokal bisa memilih production atau staging lewat `.env.local`. Rujukan backend:
-`HANDOVER_PRODUCTION_v0.2.1` dari backend, `HANDOVER_v0.2.md`, dan
-`CHANGELOG_API.md` (salinan changelog backend). Serah terima FE → BE:
-`handover.md`.
+memakai **backend production** `https://siagars-backend.vercel.app` (publik);
+lokal bisa memilih production atau staging lewat `.env.local`. Kontrak yang
+diikuti: API **0.4.0** (`new/03_KONTRAK_API_v1.md`), yang sudah live di
+production: `GET /recommendations`, `GET /hospitals/markers`, `data_quality` di
+DTO Hospital, `hospital_name` di daftar rujukan operator, dan `error.details`.
 
 - `next.config.ts` me-*rewrite* `/api/v1/*` ke `API_BASE_URL` (server-only;
   bawaan `https://siagars-backend.vercel.app`). Browser tetap same-origin
@@ -76,13 +80,14 @@ Vercel baru berfungsi setelah tim backend menambahkan origin domain itu ke
 
 | Rute | Isi |
 |---|---|
-| `/` | Beranda: pencarian, pencarian cepat, CTA lacak rujukan, cakupan data aktual |
-| `/rumah-sakit` | Pencarian + filter + daftar & peta; semua filter tersimpan di URL |
-| `/rumah-sakit/[id]` | Detail: BPJS, tempat tidur, layanan; sumber & waktu per informasi |
+| `/` | Beranda: CTA "Bantu saya pilih RS", cara kerja skor, cari nama, cakupan data, cara membaca informasi |
+| `/pilih-rs` | Asisten 3 langkah (layanan → lokasi → preferensi) → rekomendasi ber-skor 0–100 dengan rincian "Kenapa skor ini?", daftar yang belum diketahui, banner 112. Semua langkah di URL (`?step=2&services=nicu…`) |
+| `/rumah-sakit` | Pencarian + filter + daftar & peta; peta memuat semua RS di area tampilan (`/hospitals/markers`); semua filter tersimpan di URL |
+| `/rumah-sakit/[id]` | Detail: kualitas data, BPJS, tempat tidur, layanan; sumber & waktu per informasi |
 | `/lacak-rujukan` | Lookup kode via POST body (tidak di URL/storage) + timeline demo |
-| `/cek-bpjs` | **Simulasi** cek kepesertaan BPJS (NIK, nama, tgl lahir via POST body; kontrak diusulkan di `handover-bpjs.md`, menunggu backend) |
-| `/bandingkan` | Perbandingan 2–3 RS (`GET /hospitals/compare`) |
-| `/tentang-data` | Cakupan pilot, asal data, arti waktu, batas kesegaran, jarak |
+| `/cek-bpjs` | **Simulasi** cek kepesertaan BPJS (NIK, nama, tgl lahir via POST body; tidak disimpan di peramban, server hanya menyimpan riwayat tersamar 30 hari) |
+| `/bandingkan` | Perbandingan 2–3 RS berbasis keputusan: penanda "Unggul" per baris + ringkasan (`lib/hospitals/compare-winner.ts`) |
+| `/tentang-data` | Cakupan pilot, asal data, arti waktu, batas kesegaran, metodologi skor rekomendasi & kualitas data, jarak |
 | `/status` | Status server API & database (`/health`, `/ready`) |
 | `/operator/login`, `/operator/rujukan`, `/operator/layanan` | Panel operator minimum |
 
@@ -106,16 +111,19 @@ Vercel baru berfungsi setelah tim backend menambahkan origin domain itu ke
 
 ## Kontrak API
 
-`lib/contracts/types.ts` mengikuti OpenAPI staging **v0.2.1**
-(`<staging>/docs/openapi.json`) dan `HANDOVER_v0.2.md`. OpenAPI menang bila
-berbeda. `API_FRONTEND.md` di repo ini masih panduan v0.1.
+`lib/contracts/types.ts` mengikuti API **0.3.1** sesuai
+[`new/03_KONTRAK_API_v1.md`](new/03_KONTRAK_API_v1.md) dan OpenAPI backend versi
+yang sama; OpenAPI menang bila berbeda. Kontrak belum ada → minta backend, jangan
+menebak. FE **tidak** menghitung skor rekomendasi atau kualitas data — hanya
+menampilkan; satu-satunya penilaian FE adalah penanda "Unggul" di `/bandingkan`.
 
 ## Struktur
 
 ```
 app/                  rute (App Router)
-components/ui/        primitif UI: badge, tombol, state, field, pagination
-features/hospitals/   pencarian, kartu, filter, detail, peta (tanpa library)
+components/ui/        primitif UI: badge, skor/kualitas data, tombol, state, field, pagination
+features/recommendations/  wizard /pilih-rs, kartu skor, rincian skor
+features/hospitals/   pencarian, kartu, filter, detail, bandingkan, peta (tanpa library)
 features/referrals/   lookup + timeline
 features/operator/    shell, login, rujukan, layanan
 lib/contracts/        DTO & label terpusat

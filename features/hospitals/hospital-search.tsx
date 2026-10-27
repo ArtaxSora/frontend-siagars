@@ -388,6 +388,11 @@ export function HospitalSearch() {
                 onSelect={selectFromMarker}
                 userLocation={userLocation}
                 omittedCount={items.length - mappable.length}
+                area={{
+                  services: query.services,
+                  bpjs: query.bpjs,
+                  dataset: query.dataset,
+                }}
               />
             )}
             {!isDesktop && selectedHospital && (

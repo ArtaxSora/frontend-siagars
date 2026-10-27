@@ -15,6 +15,7 @@ import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { FreshnessLabel, OriginBadge, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink, Button } from "@/components/ui/button";
+import { DataQualityBadge } from "@/components/ui/decision";
 import { PhoneIcon, PinIcon } from "@/components/ui/icons";
 
 export function HospitalCard({
@@ -85,6 +86,9 @@ export function HospitalCard({
               origin={hospital.bpjs_data_origin}
             />
           </p>
+          <div>
+            <DataQualityBadge quality={hospital.data_quality} />
+          </div>
         </header>
 
         <div

@@ -10,6 +10,7 @@
  */
 import {
   useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type KeyboardEvent,
@@ -24,14 +25,46 @@ import {
   visibleTiles,
   type LatLng,
 } from "@/lib/geo/mercator";
-import { PinIcon } from "@/components/ui/icons";
+import Link from "next/link";
+import type { DataQualityLabel, MarkerMatch } from "@/lib/contracts/types";
+import { MARKER_MATCH_LABEL } from "@/lib/contracts/labels";
+import { OriginBadge } from "@/components/ui/badges";
+import { DataQualityTag } from "@/components/ui/decision";
+import {
+  AlertIcon,
+  CheckIcon,
+  CrossIcon,
+  PinIcon,
+} from "@/components/ui/icons";
 
 export interface MapMarker {
   id: string;
   lat: number;
   lng: number;
   label: string;
+  /** Marker dari GET /hospitals/markers: dibedakan menurut kecocokan layanan. */
+  info?: { match: MarkerMatch; quality: DataQualityLabel; simulated: boolean };
 }
+
+export interface MapView {
+  center: LatLng;
+  zoom: number;
+  width: number;
+  height: number;
+}
+
+/* Kelas ditulis utuh agar terdeteksi Tailwind. Warna selalu ditemani ikon. */
+const MATCH_STYLE: Record<MarkerMatch, string> = {
+  all: "bg-ok-fg",
+  partial: "bg-warn-fg",
+  none: "bg-faint",
+};
+
+export const MATCH_ICON = {
+  all: CheckIcon,
+  partial: AlertIcon,
+  none: CrossIcon,
+} as const;
 
 const TILE_URL =
   process.env.NEXT_PUBLIC_TILE_URL ||
@@ -52,11 +85,14 @@ export default function TileMap({
   selectedId,
   onSelect,
   userLocation = null,
+  onViewChange,
 }: {
   markers: MapMarker[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   userLocation?: LatLng | null;
+  /** Dipanggil setiap tampilan (pusat/zoom/ukuran) berubah. */
+  onViewChange?: (view: MapView) => void;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number } | null>(null);
@@ -96,6 +132,11 @@ export default function TileMap({
     observer.observe(el);
     return () => observer.disconnect();
   }, []);
+
+  const reportView = useEffectEvent((v: MapView) => onViewChange?.(v));
+  useEffect(() => {
+    reportView({ center: view.center, zoom: view.zoom, width: size.w, height: size.h });
+  }, [view.center, view.zoom, size.w, size.h]);
 
   const zoomBy = (delta: number) =>
     setView((v) => ({
@@ -191,24 +232,61 @@ export default function TileMap({
             return null;
           }
           const selected = m.id === selectedId;
+          const Icon = m.info ? MATCH_ICON[m.info.match] : PinIcon;
           return (
             <button
               key={m.id}
               type="button"
-              aria-label={m.label}
+              aria-label={
+                m.info ? `${m.label} — ${MARKER_MATCH_LABEL[m.info.match]}` : m.label
+              }
               aria-pressed={selected}
               onClick={() => onSelect(m.id)}
               style={{ left: pos.left, top: pos.top, zIndex: selected ? 20 : 10 }}
               className={`absolute flex -translate-x-1/2 -translate-y-full items-center justify-center rounded-full border-2 border-white text-white shadow-level2 ${
                 selected
                   ? "h-9 w-9 bg-brand-deep ring-2 ring-brand"
-                  : "h-7 w-7 bg-trust hover:bg-trust-action"
+                  : m.info
+                    ? `h-7 w-7 ${MATCH_STYLE[m.info.match]} ${m.info.simulated ? "outline-dashed outline-[1.5px] outline-sim-line" : ""}`
+                    : "h-7 w-7 bg-trust hover:bg-trust-action"
               }`}
             >
-              <PinIcon width={selected ? 18 : 14} height={selected ? 18 : 14} />
+              <Icon width={selected ? 18 : 14} height={selected ? 18 : 14} />
             </button>
           );
         })}
+
+        {(() => {
+          const m = markers.find((x) => x.id === selectedId && x.info);
+          if (!m?.info) return null;
+          const pos = markerOffset(m, view.center, view.zoom, size.w, size.h);
+          const Icon = MATCH_ICON[m.info.match];
+          return (
+            <div
+              role="dialog"
+              aria-label={m.label}
+              style={{
+                left: Math.max(8, Math.min(size.w - 248, pos.left - 120)),
+                top: Math.max(8, pos.top - 44 - 132),
+              }}
+              className="absolute z-30 flex w-60 flex-col gap-1.5 rounded-md border border-line bg-surface p-3 text-[12px] leading-4 shadow-level3"
+            >
+              <Link
+                href={`/rumah-sakit/${encodeURIComponent(m.id)}`}
+                className="text-[14px] font-semibold leading-5 text-trust underline"
+              >
+                {m.label}
+              </Link>
+              <span className="inline-flex items-center gap-1 text-ink">
+                <Icon /> {MARKER_MATCH_LABEL[m.info.match]}
+              </span>
+              <span className="flex flex-wrap gap-1">
+                <DataQualityTag label={m.info.quality} />
+                {m.info.simulated && <OriginBadge origin="simulation" />}
+              </span>
+            </div>
+          );
+        })()}
 
         {userLocation && (
           <span

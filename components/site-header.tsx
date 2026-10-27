@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { CrossIcon, MenuIcon } from "@/components/ui/icons";
 
 const LINKS = [
-  { href: "/rumah-sakit", label: "Cari rumah sakit" },
+  { href: "/pilih-rs", label: "Pilih RS" },
+  { href: "/rumah-sakit", label: "Cari RS" },
+  { href: "/bandingkan", label: "Bandingkan" },
   { href: "/lacak-rujukan", label: "Lacak rujukan" },
   { href: "/cek-bpjs", label: "Cek BPJS" },
   { href: "/tentang-data", label: "Tentang data" },
@@ -22,8 +24,8 @@ function isActive(pathname: string | null, href: string): boolean {
 }
 
 /**
- * Header situs. < md: logo + tombol "Menu" berlabel yang membuka daftar tautan
- * (bukan baris tautan yang terlipat dua). md+: baris tautan biasa.
+ * Header situs. < lg: logo + tombol "Menu" berlabel yang membuka daftar tautan
+ * (bukan baris tautan yang terlipat dua). lg+: baris tautan biasa.
  *
  * usePathname di layout menahan prerender rute dengan param dinamis
  * (cacheComponents), jadi dibungkus Suspense; fallback = header yang sama
@@ -51,7 +53,7 @@ function SiteHeaderView({ pathname }: { pathname: string | null }) {
   }
 
   const linkClass = (href: string, subtle = false) =>
-    `inline-flex min-h-11 items-center rounded-md px-3 md:min-h-10 ${
+    `inline-flex min-h-11 items-center whitespace-nowrap rounded-md px-3 lg:min-h-10 ${
       isActive(pathname, href)
         ? "bg-brand-tint font-semibold text-brand-deep"
         : subtle
@@ -71,7 +73,7 @@ function SiteHeaderView({ pathname }: { pathname: string | null }) {
 
         <button
           type="button"
-          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-line px-3 font-semibold text-ink hover:bg-well md:hidden"
+          className="inline-flex min-h-11 items-center gap-2 rounded-md border border-line px-3 font-semibold text-ink hover:bg-well lg:hidden"
           aria-expanded={open}
           aria-controls="site-nav"
           onClick={() => setOpen((v) => !v)}
@@ -83,15 +85,15 @@ function SiteHeaderView({ pathname }: { pathname: string | null }) {
         <nav
           id="site-nav"
           aria-label="Navigasi utama"
-          className={`${open ? "block" : "hidden"} absolute inset-x-0 top-full z-30 border-b border-line bg-surface px-4 pb-3 shadow-level3 md:static md:block md:border-0 md:p-0 md:shadow-none`}
+          className={`${open ? "block" : "hidden"} absolute inset-x-0 top-full z-30 border-b border-line bg-surface px-4 pb-3 shadow-level3 lg:static lg:block lg:border-0 lg:p-0 lg:shadow-none`}
         >
-          <ul className="flex flex-col gap-1 md:flex-row md:items-center">
+          <ul className="flex flex-col gap-1 lg:flex-row lg:items-center">
             {LINKS.map((l) => (
               <li key={l.href}>
                 <Link
                   href={l.href}
                   aria-current={isActive(pathname, l.href) ? "page" : undefined}
-                  className={`${linkClass(l.href)} w-full md:w-auto`}
+                  className={`${linkClass(l.href)} w-full lg:w-auto`}
                 >
                   {l.label}
                 </Link>
@@ -101,7 +103,7 @@ function SiteHeaderView({ pathname }: { pathname: string | null }) {
               <Link
                 href={OPERATOR_LINK.href}
                 aria-current={isActive(pathname, OPERATOR_LINK.href) ? "page" : undefined}
-                className={`${linkClass(OPERATOR_LINK.href, true)} w-full md:w-auto`}
+                className={`${linkClass(OPERATOR_LINK.href, true)} w-full lg:w-auto`}
               >
                 {OPERATOR_LINK.label}
               </Link>

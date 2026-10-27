@@ -15,9 +15,22 @@ import {
 } from "@/lib/contracts/labels";
 import { BED_CATEGORIES, type Hospital } from "@/lib/contracts/types";
 import { hasSimulatedData, parseCompareIds } from "@/lib/hospitals/summary";
+import {
+  compareSummary,
+  judgeCompare,
+  type CompareJudgement,
+} from "@/lib/hospitals/compare-winner";
 import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, SimulatedTag } from "@/features/hospitals/facility-badges";
-import { OriginBadge, SourceLine, StatusBadge } from "@/components/ui/badges";
+import {
+  FreshnessLabel,
+  OriginBadge,
+  SourceLine,
+  StatusBadge,
+} from "@/components/ui/badges";
+import { DataQualityBadge, WinnerMark } from "@/components/ui/decision";
+import { StarIcon } from "@/components/ui/icons";
+import { ButtonLink } from "@/components/ui/button";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
@@ -103,7 +116,48 @@ function buildRows(hospitals: Hospital[]): CompareRow[] {
         );
       },
     })),
+    {
+      key: "data",
+      label: "Kualitas & kesegaran data",
+      cell: (h: Hospital) => (
+        <div className="flex flex-col items-start gap-1">
+          <DataQualityBadge quality={h.data_quality} />
+          <FreshnessLabel freshness={h.data_quality.freshness} />
+        </div>
+      ),
+    },
   ];
+}
+
+/** Isi sel + penanda "Unggul" (ikon + teks) bila RS ke-i menang di baris ini. */
+function JudgedCell({
+  row,
+  h,
+  index,
+  label,
+  judgement,
+}: {
+  row: CompareRow;
+  h: Hospital;
+  index: number;
+  label: string;
+  judgement: CompareJudgement;
+}) {
+  const won = judgement.winners[row.key]?.includes(index) ?? false;
+  return (
+    <div className="flex flex-col items-start gap-1.5">
+      {won && <WinnerMark />}
+      <div>{row.cell(h, label)}</div>
+    </div>
+  );
+}
+
+function WinCount({ wins, judged }: { wins: number; judged: number }) {
+  return (
+    <p className="mt-1 text-[12px] font-semibold text-muted tabular-nums">
+      Unggul di {wins} dari {judged} atribut
+    </p>
+  );
 }
 
 function HospitalHeading({ h }: { h: Hospital }) {
@@ -126,7 +180,15 @@ function HospitalHeading({ h }: { h: Hospital }) {
 }
 
 /** md+: tabel berdampingan. */
-function Table({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[] }) {
+function Table({
+  hospitals,
+  rows,
+  judgement,
+}: {
+  hospitals: Hospital[];
+  rows: CompareRow[];
+  judgement: CompareJudgement;
+}) {
   return (
     <div className="hidden overflow-x-auto rounded-md border border-line bg-surface md:block">
       <table className="w-full border-collapse text-left">
@@ -134,9 +196,10 @@ function Table({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[] 
         <thead>
           <tr className="border-b border-line">
             <th scope="col" className="p-3" />
-            {hospitals.map((h) => (
+            {hospitals.map((h, i) => (
               <th key={h.id} scope="col" className="p-3 align-top">
                 <HospitalHeading h={h} />
+                <WinCount wins={judgement.wins[i]} judged={judgement.judged} />
               </th>
             ))}
           </tr>
@@ -145,9 +208,9 @@ function Table({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[] 
           {rows.map((row) => (
             <tr key={row.key} className="border-b border-line last:border-0">
               <th scope="row" className="p-3 align-top">{row.label}</th>
-              {hospitals.map((h) => (
+              {hospitals.map((h, i) => (
                 <td key={h.id} className="p-3 align-top">
-                  {row.cell(h, row.label)}
+                  <JudgedCell row={row} h={h} index={i} label={row.label} judgement={judgement} />
                 </td>
               ))}
             </tr>
@@ -162,7 +225,15 @@ function Table({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[] 
  * < md: satu blok per atribut, tiap RS ditumpuk di bawahnya. Tetap bisa
  * dibandingkan tanpa menggulir tabel ke samping.
  */
-function Stacked({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[] }) {
+function Stacked({
+  hospitals,
+  rows,
+  judgement,
+}: {
+  hospitals: Hospital[];
+  rows: CompareRow[];
+  judgement: CompareJudgement;
+}) {
   return (
     <div className="flex flex-col gap-3 md:hidden">
       <ol className="flex flex-col gap-2 rounded-md border border-line bg-surface p-3">
@@ -171,6 +242,7 @@ function Stacked({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[
             <span className="font-semibold text-faint">{i + 1}.</span>
             <div>
               <HospitalHeading h={h} />
+              <WinCount wins={judgement.wins[i]} judged={judgement.judged} />
             </div>
           </li>
         ))}
@@ -187,7 +259,7 @@ function Stacked({ hospitals, rows }: { hospitals: Hospital[]; rows: CompareRow[
                 <span className="text-[12px] font-semibold text-muted">
                   {i + 1}. {h.name}
                 </span>
-                <div>{row.cell(h, h.name)}</div>
+                <JudgedCell row={row} h={h} index={i} label={h.name} judgement={judgement} />
               </li>
             ))}
           </ul>
@@ -216,7 +288,15 @@ export function CompareView() {
         {back}
         <EmptyState
           title="Pilih 2–3 rumah sakit"
-          description="Tautan perbandingan harus memuat 2 sampai 3 ID rumah sakit yang berbeda (UUID atau kode SATUSEHAT). Pilih dari hasil pencarian."
+          description="Centang “Bandingkan” pada 2 sampai 3 rumah sakit di hasil rekomendasi atau pencarian. SiagaRS lalu menandai siapa yang unggul di setiap atribut."
+          action={
+            <div className="flex flex-wrap gap-2">
+              <ButtonLink href="/pilih-rs">Bantu saya pilih RS</ButtonLink>
+              <ButtonLink href="/rumah-sakit" variant="secondary">
+                Cari rumah sakit
+              </ButtonLink>
+            </div>
+          }
         />
       </div>
     );
@@ -244,13 +324,33 @@ export function CompareView() {
   const hospitals = res.data?.data;
   if (!hospitals) return <LoadingBlock label="Memuat perbandingan…" rows={4} />;
   const rows = buildRows(hospitals);
+  const judgement = judgeCompare(hospitals, FACILITY_SERVICE_SLUGS);
+  const verdict = compareSummary(
+    hospitals.map((h) => h.name),
+    judgement,
+  );
 
   return (
     <div className="flex flex-col gap-4">
       {back}
+      <section
+        aria-label="Ringkasan perbandingan"
+        className="flex flex-col gap-1 rounded-md border border-ok-line bg-ok-bg p-4"
+      >
+        <p className="inline-flex items-center gap-2 text-[16px] font-semibold text-ok-fg">
+          <StarIcon className="shrink-0" />
+          {verdict ?? "Belum ada rumah sakit yang unggul pada atribut yang diketahui."}
+        </p>
+        <p className="text-[12px] leading-[18px] text-muted">
+          &ldquo;Unggul&rdquo; = nilai terbaik di baris itu menurut data kami
+          (layanan tersedia &gt; terbatas, tempat tidur kosong terbanyak, BPJS
+          diterima, data paling baru). Nilai yang belum diketahui tidak pernah
+          unggul; nilai seri ditandai semua. Ini bukan penilaian mutu medis.
+        </p>
+      </section>
       {hospitals.some(hasSimulatedData) && <SimulationNotice />}
-      <Table hospitals={hospitals} rows={rows} />
-      <Stacked hospitals={hospitals} rows={rows} />
+      <Table hospitals={hospitals} rows={rows} judgement={judgement} />
+      <Stacked hospitals={hospitals} rows={rows} judgement={judgement} />
       <CapacityDisclaimer />
     </div>
   );

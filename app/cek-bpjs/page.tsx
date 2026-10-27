@@ -16,8 +16,12 @@ export default function BpjsCheckPage() {
       <p className="text-muted">
         Periksa status kepesertaan BPJS Kesehatan dengan NIK, nama, dan tanggal
         lahir. Fitur ini adalah <strong>simulasi</strong> dengan data peserta
-        sintetis: SiagaRS tidak terhubung ke sistem BPJS Kesehatan. Data yang
-        Anda isi tidak disimpan di peramban.
+        sintetis: SiagaRS tidak terhubung ke sistem BPJS Kesehatan.
+      </p>
+      <p className="rounded-md border border-line bg-well px-3 py-2 text-[14px]">
+        <strong>Simulasi — bukan BPJS Kesehatan.</strong> Kami tidak menyimpan
+        NIK lengkap Anda; riwayat pengecekan disimpan dalam bentuk tersamar
+        selama 30 hari. Data yang Anda isi tidak disimpan di peramban.
       </p>
       <BpjsCheck />
     </div>

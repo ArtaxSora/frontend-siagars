@@ -7,9 +7,13 @@ import type {
   BpjsParticipantStatus,
   Coded,
   DataOrigin,
+  DataQualityLabel,
+  ExclusionReason,
   FacilitySummary,
   Freshness,
+  MarkerMatch,
   ReferralStatus,
+  ScoreLevel,
   ServiceStatus,
   TrackingHistory,
 } from "./types.ts";
@@ -116,4 +120,34 @@ export function operationalLabel(value: boolean | null): string {
 export const BPJS_PARTICIPANT_STATUS_LABEL: Record<BpjsParticipantStatus, string> = {
   active: "Aktif",
   inactive: "Tidak aktif",
+};
+
+/* ---------------- Keputusan (API 0.4.0) ---------------- */
+
+/** Level skor kecocokan: high=ok, medium=warn, low=bad (PRD §6). */
+export const SCORE_LEVEL_LABEL: Record<ScoreLevel, string> = {
+  high: "Kecocokan tinggi",
+  medium: "Kecocokan sedang",
+  low: "Kecocokan rendah",
+};
+
+export const DATA_QUALITY_LABEL: Record<DataQualityLabel, string> = {
+  baik: "Data baik",
+  cukup: "Data cukup",
+  terbatas: "Data terbatas",
+};
+
+export const MARKER_MATCH_LABEL: Record<MarkerMatch, string> = {
+  all: "Semua layanan yang dipilih tercatat tersedia",
+  partial: "Sebagian layanan yang dipilih tercatat tersedia",
+  none: "Layanan yang dipilih tidak tercatat tersedia",
+};
+
+/** Bagian kalimat "N RS tidak ditampilkan karena …". `{services}` = nama layanan. */
+export const EXCLUSION_REASON_LABEL: Record<ExclusionReason, string> = {
+  service_unavailable: "{services} tercatat tidak tersedia",
+  bpjs_false: "tercatat tidak menerima BPJS",
+  out_of_radius: "berada di luar radius",
+  location_unknown: "koordinatnya belum diketahui",
+  not_operational: "tercatat tidak beroperasi",
 };

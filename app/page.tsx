@@ -3,13 +3,30 @@ import { CoverageNote } from "@/features/home/coverage-note";
 import { ButtonLink } from "@/components/ui/button";
 import { inputClasses } from "@/components/ui/field";
 import { SearchIcon } from "@/components/ui/icons";
+import { EmergencyBanner } from "@/components/ui/decision";
 
+// Mulai asisten dengan layanan sudah terpilih (langsung ke langkah lokasi).
 const QUICK_LINKS = [
-  { href: "/rumah-sakit?services=icu", label: "ICU" },
-  { href: "/rumah-sakit?services=nicu", label: "NICU" },
-  { href: "/rumah-sakit?services=igd-24h", label: "IGD 24 jam" },
-  { href: "/rumah-sakit?services=ambulance", label: "Ambulans" },
-  { href: "/rumah-sakit?bpjs=true", label: "Menerima BPJS" },
+  { href: "/pilih-rs?step=2&services=icu", label: "ICU" },
+  { href: "/pilih-rs?step=2&services=nicu", label: "NICU" },
+  { href: "/pilih-rs?step=2&services=picu", label: "PICU" },
+  { href: "/pilih-rs?step=2&services=igd-24h", label: "IGD 24 jam" },
+  { href: "/pilih-rs?step=2&services=rawat-inap", label: "Rawat inap" },
+] as const;
+
+const HOW_SCORE_WORKS = [
+  {
+    title: "Sebutkan kebutuhan",
+    body: "Pilih layanan (mis. NICU), lokasi pasien, dan apakah BPJS wajib.",
+  },
+  {
+    title: "Kami saring & beri skor",
+    body: "RS yang tercatat tidak menyediakan layanan dikeluarkan. Sisanya diberi skor 0–100 dari kecocokan layanan, tempat tidur, jarak garis lurus, BPJS, dan keyakinan data.",
+  },
+  {
+    title: "Anda memutuskan",
+    body: "Setiap skor bisa dibuka alasannya, lengkap dengan yang belum diketahui. Telepon RS, buka rute, atau bandingkan 2–3 pilihan.",
+  },
 ] as const;
 
 const HOW_TO_READ = [
@@ -33,14 +50,44 @@ export default function HomePage() {
       <section className="flex flex-col gap-5 rounded-md border border-line bg-surface p-5 md:p-10">
         <div className="flex max-w-3xl flex-col gap-3">
           <h1 className="text-[28px] font-bold leading-9 tracking-[-0.01em] md:text-[36px] md:leading-[44px] md:tracking-[-0.02em]">
-            Cari rumah sakit berdasarkan fasilitas yang dinyatakan tersedia
+            Putuskan rumah sakit yang tepat dengan data yang jujur.
           </h1>
           <p className="text-[16px] leading-6 text-muted">
-            Bantu keluarga pasien menyaring rumah sakit, memeriksa sumber dan
-            umur informasinya, lalu menghubungi rumah sakit langsung. Ini
-            prototipe dengan data pilot terbatas.
+            Sebutkan layanan yang dibutuhkan dan lokasi pasien. SiagaRS
+            mengurutkan rumah sakit yang paling cocok, menjelaskan alasan
+            skornya, dan selalu menunjukkan sumber, umur, serta kepastian
+            datanya.
           </p>
         </div>
+
+        <div className="flex flex-col gap-3">
+          <ButtonLink href="/pilih-rs" className="self-start px-6 text-[16px]">
+            Bantu saya pilih RS
+          </ButtonLink>
+          <div className="flex flex-col gap-2">
+            <p className="text-[13px] font-semibold">Atau mulai dari layanan</p>
+            <ul className="flex flex-wrap gap-2">
+              {QUICK_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    className="inline-flex min-h-11 items-center rounded-lg border md:min-h-9 border-line bg-well px-3 text-[13px] font-semibold text-muted hover:border-line-strong"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <EmergencyBanner />
+      </section>
+
+      <section aria-labelledby="cari-nama" className="flex flex-col gap-3 rounded-md border border-line bg-surface p-5 md:p-6">
+        <h2 id="cari-nama" className="text-[18px] font-semibold leading-[26px]">
+          Sudah tahu nama rumah sakitnya?
+        </h2>
 
         {/* Form GET biasa: tetap berfungsi tanpa JavaScript. */}
         <form
@@ -69,23 +116,37 @@ export default function HomePage() {
           </button>
         </form>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-[13px] font-semibold">Pencarian cepat</p>
-          <ul className="flex flex-wrap gap-2">
-            {QUICK_LINKS.map((l) => (
-              <li key={l.href}>
-                <Link
-                  href={l.href}
-                  className="inline-flex min-h-11 items-center rounded-lg border md:min-h-9 border-line bg-well px-3 text-[13px] font-semibold text-muted hover:border-line-strong"
-                >
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-
         <CoverageNote />
+      </section>
+
+      <section aria-labelledby="cara-skor" className="flex flex-col gap-4">
+        <h2 id="cara-skor" className="text-[24px] font-bold leading-8 tracking-[-0.01em]">
+          Cara kerja skor
+        </h2>
+        <ol className="grid gap-4 md:grid-cols-3">
+          {HOW_SCORE_WORKS.map((item, i) => (
+            <li
+              key={item.title}
+              className="flex flex-col gap-2 rounded-md border border-line bg-surface p-4"
+            >
+              <span
+                aria-hidden="true"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-brand-tint font-bold text-brand-deep"
+              >
+                {i + 1}
+              </span>
+              <h3 className="text-[16px] font-semibold">{item.title}</h3>
+              <p className="text-muted">{item.body}</p>
+            </li>
+          ))}
+        </ol>
+        <p className="text-muted">
+          Skor adalah tentang kecocokan kebutuhan dan kepastian data — bukan
+          kualitas medis.{" "}
+          <Link href="/tentang-data#skor-rekomendasi" className="font-semibold text-trust underline">
+            Baca metodologinya
+          </Link>
+        </p>
       </section>
 
       <section

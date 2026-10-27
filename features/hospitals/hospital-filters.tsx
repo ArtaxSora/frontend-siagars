@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState } from "react";
 import type { ApiResource } from "@/lib/hooks/use-api-resource";
 import type {
   ApiSuccess,
@@ -18,39 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Field, inputClasses } from "@/components/ui/field";
 import { FilterIcon, PinIcon } from "@/components/ui/icons";
-
-/** Chip yang dapat di-toggle; checkbox asli tetap ada untuk keyboard & pembaca layar. */
-function ToggleChip({
-  checked,
-  onChange,
-  title,
-  children,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  title?: string;
-  children: ReactNode;
-}) {
-  return (
-    <label
-      title={title}
-      className={`inline-flex min-h-11 cursor-pointer md:min-h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-semibold focus-within:outline focus-within:outline-[3px] focus-within:outline-offset-2 focus-within:outline-brand ${
-        checked
-          ? "border-brand bg-brand text-white"
-          : "border-line bg-well text-muted hover:border-line-strong"
-      }`}
-    >
-      <input
-        type="checkbox"
-        className="sr-only"
-        checked={checked}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span aria-hidden="true">{checked ? "✓" : "+"}</span>
-      {children}
-    </label>
-  );
-}
+import { ToggleChip } from "@/components/ui/toggle-chip";
 
 /**
  * Kode seed ("36.71") dan SATUSEHAT ("3671") adalah wilayah berbeda dengan

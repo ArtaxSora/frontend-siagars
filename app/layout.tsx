@@ -14,11 +14,11 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "SiagaRS — Cari rumah sakit berdasarkan fasilitas",
+    default: "SiagaRS — Putuskan rumah sakit yang tepat dengan data yang jujur",
     template: "%s · SiagaRS",
   },
   description:
-    "Prototipe untuk mencari rumah sakit berdasarkan fasilitas yang dinyatakan tersedia, lengkap dengan sumber dan umur informasinya. Bukan layanan resmi gawat darurat.",
+    "Asisten pemilihan rumah sakit berbasis data: rekomendasi ber-skor yang bisa dijelaskan, perbandingan, serta sumber dan umur setiap informasi. Bukan layanan gawat darurat — darurat: 112.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
