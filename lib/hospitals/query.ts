@@ -7,8 +7,9 @@
  * - Parameter kosong/berulang/tidak dikenal -> 422, jadi nilai kosong
  *   TIDAK PERNAH dikirim.
  * - `lat` & `lng` hanya berpasangan; `sort=distance` butuh keduanya.
- * - Kode wilayah dikirim kembali persis seperti yang diterima dari API
- *   (format seed "31.71" vs sandbox "3171" berbeda) — jangan ditebak.
+ * - Kode wilayah dikirim kembali persis seperti yang diterima dari API —
+ *   jangan ditebak. API 0.3.1 memakai format tanpa titik ("3171"); titik
+ *   masih diterima parser selama production belum 0.3.1.
  * - `q` berawalan `$` ditolak/di-escape di frontend (temuan backend terbuka).
  */
 

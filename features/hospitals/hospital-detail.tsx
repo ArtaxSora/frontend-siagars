@@ -21,6 +21,7 @@ import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { SourceLine, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink } from "@/components/ui/button";
+import { DataQualityBadge } from "@/components/ui/decision";
 import { PhoneIcon, QuestionIcon, RouteIcon } from "@/components/ui/icons";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
@@ -120,6 +121,9 @@ export function HospitalDetail({ id }: { id: string }) {
             {hospital.address ?? "Alamat belum diketahui"}
           </p>
           {distance && <p className="tabular-nums text-muted">{distance}</p>}
+          <div className="mt-1">
+            <DataQualityBadge quality={hospital.data_quality} />
+          </div>
         </div>
 
         <div className="flex flex-wrap gap-2">

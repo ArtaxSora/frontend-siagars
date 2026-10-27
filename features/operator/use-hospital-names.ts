@@ -4,9 +4,10 @@ import { useEffect, useState } from "react";
 import { getHospital } from "@/lib/api/endpoints";
 
 /**
- * Nama RS untuk daftar ID, termasuk RS tujuan rujukan di luar scope operator
- * (GET /admin/hospitals hanya memuat RS dalam scope). Diambil satu per satu
- * lewat GET /hospitals/{id}; gagal -> nama tidak tersedia dan UI menampilkan ID.
+ * Nama RS tujuan rujukan (bisa di luar scope operator; DTO daftar hanya
+ * membawa `hospital_name` RS pemilik). Diambil satu per satu lewat
+ * GET /hospitals/{id}, hanya untuk rujukan yang sudah punya tujuan; gagal ->
+ * nama tidak tersedia dan UI menampilkan ID.
  */
 export function useHospitalNames(ids: string[]): Record<string, string> {
   const [names, setNames] = useState<Record<string, string>>({});

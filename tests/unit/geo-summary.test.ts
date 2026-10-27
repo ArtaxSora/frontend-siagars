@@ -177,6 +177,13 @@ describe("penanda simulasi (API 0.2.1)", () => {
       last_source_updated_at: null,
       data_origin: null,
     },
+    data_quality: {
+      score: 24,
+      label: "terbatas",
+      completeness: 0.08,
+      freshness: "unknown",
+      primary_origin: "satusehat_sandbox",
+    },
     data_origin: "satusehat_sandbox",
     source_url: null,
     source_updated_at: null,

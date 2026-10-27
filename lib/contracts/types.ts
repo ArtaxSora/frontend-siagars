@@ -2,8 +2,8 @@
  * DTO kontrak API SiagaRS (/api/v1) — snake_case, timestamp RFC3339 UTC,
  * ID = UUID lowercase.
  *
- * Disusun dari "SiagaRS API v0.1 — Panduan Integrasi Frontend". Sumber
- * kontrak resmi tetap `openapi.yaml` backend
+ * Mengikuti API 0.4.0 (`new/03_KONTRAK_API_v1.md` §1–§5, §7). Sumber kontrak
+ * resmi tetap `openapi.yaml` backend versi yang sama
  * (https://siagars-backend.vercel.app/docs). Bila berbeda, OpenAPI menang —
  * jangan mengubah enum sepihak.
  *
@@ -45,6 +45,25 @@ export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 
 export const DATASETS = ["real", "simulation", "all"] as const;
 export type Dataset = (typeof DATASETS)[number];
+
+export const DATA_QUALITY_LABELS = ["baik", "cukup", "terbatas"] as const;
+export type DataQualityLabel = (typeof DATA_QUALITY_LABELS)[number];
+
+/**
+ * Skor kualitas DATA (bukan kualitas layanan RS), dihitung server (kontrak §5).
+ * FE menampilkan apa adanya; tidak pernah menghitung ulang.
+ */
+export interface DataQuality {
+  /** 0–100. */
+  score: number;
+  label: DataQualityLabel;
+  /** Proporsi item kunci yang diketahui, 0..1. */
+  completeness: number;
+  /** Kesegaran terburuk dari layanan/bed yang ada. */
+  freshness: Freshness;
+  /** Origin mayoritas layanan/bed; bila kosong, origin RS. */
+  primary_origin: DataOrigin;
+}
 
 /**
  * Atribut sumber, melekat langsung (datar) pada Hospital, HospitalService,
@@ -140,6 +159,8 @@ export interface Hospital extends Provenance {
   /** null = belum diketahui. */
   operational: boolean | null;
   facility_summary: FacilitySummary;
+  /** API 0.4.0 (BE-11). */
+  data_quality: DataQuality;
   services: HospitalService[];
   beds: HospitalBed[];
 }
@@ -150,7 +171,10 @@ export interface ServiceMaster {
   category: string;
 }
 
-/** Kode wilayah dipakai apa adanya: seed "31.71" dan MSI "3171" berbeda. */
+/**
+ * Sejak API 0.3.1 kode wilayah memakai format Kemendagri tanpa titik
+ * ("31", "3171"); kode bertitik ditolak 422. Tetap dipakai apa adanya.
+ */
 export interface Region {
   code: string;
   name: string;
@@ -201,8 +225,14 @@ export interface ApiSuccess<T, M = unknown> {
   meta?: M;
 }
 
+/** Rincian galat per field (format error seragam, API 0.3.1). */
+export interface ApiErrorDetail {
+  field: string;
+  issue: string;
+}
+
 export interface ApiErrorBody {
-  error: { code: string; message: string };
+  error: { code: string; message: string; details?: ApiErrorDetail[] };
   request_id: string;
 }
 
@@ -236,6 +266,11 @@ export interface Referral {
   updated_at: string;
 }
 
+/** Item GET /admin/referrals (API 0.3.1): Referral + nama RS pemilik (BE-08). */
+export interface AdminReferral extends Referral {
+  hospital_name: string;
+}
+
 /**
  * State machine dari panduan (§6). Server tetap yang memutuskan: transisi
  * tidak sah → 409 conflict. Dipakai hanya untuk menyusun pilihan di UI.
@@ -259,7 +294,7 @@ export interface Operator {
 }
 
 export interface LoginResult {
-  /** "bila tersedia" (handover production §5); bila kosong ambil via GET /auth/csrf. */
+  /** Opsional sejak API 0.3.1 (kontrak §3); bila kosong ambil via GET /auth/csrf. */
   csrf_token?: string;
   expires_at: string;
 }
@@ -280,7 +315,7 @@ export interface ReadyResult {
   status: "ready";
 }
 
-/* ---------------- Cek BPJS (simulasi; kontrak diusulkan FE, lihat handover-bpjs.md) ---------------- */
+/* ---------------- Cek BPJS (simulasi; API 0.3.1 tidak menyimpan NIK mentah) ---------------- */
 
 export const BPJS_PARTICIPANT_STATUSES = ["active", "inactive"] as const;
 export type BpjsParticipantStatus = (typeof BPJS_PARTICIPANT_STATUSES)[number];
@@ -316,4 +351,113 @@ export interface BpjsCheckResult {
   /** Selalu "simulation" sampai ada integrasi resmi. */
   data_origin: DataOrigin;
   checked_at: string;
+}
+
+/* ---------------- Rekomendasi (API 0.4.0, kontrak §4) ---------------- */
+
+export const RADIUS_OPTIONS = [5, 10, 20, 50] as const;
+export type RadiusKm = (typeof RADIUS_OPTIONS)[number];
+
+export const BPJS_PREFERENCES = ["required", "any"] as const;
+export type BpjsPreference = (typeof BPJS_PREFERENCES)[number];
+
+export const SCORE_LEVELS = ["high", "medium", "low"] as const;
+export type ScoreLevel = (typeof SCORE_LEVELS)[number];
+
+export const SCORE_COMPONENT_KEYS = [
+  "service_match",
+  "bed_availability",
+  "distance",
+  "bpjs",
+  "data_confidence",
+] as const;
+export type ScoreComponentKey = (typeof SCORE_COMPONENT_KEYS)[number];
+
+export const RECOMMENDATION_FLAGS = [
+  "contains_simulated_data",
+  "stale_or_unknown_freshness",
+] as const;
+export type RecommendationFlag = (typeof RECOMMENDATION_FLAGS)[number];
+
+export const EXCLUSION_REASONS = [
+  "service_unavailable",
+  "bpjs_false",
+  "out_of_radius",
+  "location_unknown",
+  "not_operational",
+] as const;
+export type ExclusionReason = (typeof EXCLUSION_REASONS)[number];
+
+export interface ScoreComponent {
+  key: ScoreComponentKey;
+  label: string;
+  /** Bobot setelah renormalisasi, 0..1. */
+  weight: number;
+  value: number;
+  /** round(100 × weight × value × penalti). */
+  contribution: number;
+  /** Penjelasan Bahasa Indonesia dari server; tampilkan apa adanya. */
+  reason: string;
+}
+
+/** DTO RS ringkas di rekomendasi: memakai `lat`/`lng`, bukan latitude/longitude. */
+export interface RecommendedHospital {
+  id: string;
+  name: string;
+  address: string | null;
+  city_name: string;
+  province_name: string;
+  phone: string | null;
+  lat: number | null;
+  lng: number | null;
+  bpjs: boolean | null;
+  data_origin: DataOrigin;
+  facility_summary: FacilitySummary;
+  data_quality: DataQuality;
+}
+
+export interface Recommendation {
+  hospital: RecommendedHospital;
+  score: number;
+  level: ScoreLevel;
+  /** Garis lurus; null bila permintaan tanpa lat/lng. */
+  distance_km: number | null;
+  components: ScoreComponent[];
+  /** Nilai yang belum diketahui, mis. "service_icu", "bed_nicu", "bpjs". */
+  unknowns: string[];
+  flags: RecommendationFlag[];
+}
+
+export interface RecommendationMeta {
+  total_considered: number;
+  /** Hanya alasan dengan ≥ 1 RS yang muncul. */
+  excluded: Partial<Record<ExclusionReason, number>>;
+  weights: Record<ScoreComponentKey, number>;
+  generated_at: string;
+  algorithm_version: string;
+  dataset: Dataset;
+  candidates_truncated: boolean;
+  radius_km: number | null;
+}
+
+/* ---------------- Marker peta (API 0.4.0, kontrak §7) ---------------- */
+
+export const MARKER_MATCHES = ["all", "partial", "none"] as const;
+export type MarkerMatch = (typeof MARKER_MATCHES)[number];
+
+export interface HospitalMarker {
+  id: string;
+  name: string;
+  lat: number;
+  lng: number;
+  match: MarkerMatch;
+  data_quality_label: DataQualityLabel;
+  has_simulated_data: boolean;
+}
+
+export interface MarkerMeta {
+  count: number;
+  truncated: boolean;
+  dataset: Dataset;
+  as_of: string;
 }

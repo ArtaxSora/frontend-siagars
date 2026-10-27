@@ -4,6 +4,7 @@
  */
 import { apiRequest } from "@/lib/api/client";
 import type {
+  AdminReferral,
   BpjsCheckRequest,
   BpjsCheckResult,
   CompareMeta,
@@ -14,12 +15,16 @@ import type {
   HealthResult,
   Hospital,
   HospitalBed,
+  HospitalMarker,
   HospitalService,
   ListMeta,
   LoginResult,
+  MarkerMeta,
   Operator,
   Province,
   ReadyResult,
+  Recommendation,
+  RecommendationMeta,
   Referral,
   ReferralStatus,
   ServiceMaster,
@@ -29,6 +34,11 @@ import type {
   TrackingResult,
 } from "@/lib/contracts/types";
 import { buildApiQueryString, type HospitalQuery } from "@/lib/hospitals/query";
+import {
+  buildRecommendationApiQuery,
+  type WizardState,
+} from "@/lib/recommendations/wizard";
+import { bboxParam, type BBox } from "@/lib/geo/bbox";
 
 /* ---------------- Publik ---------------- */
 
@@ -67,6 +77,33 @@ export function suggestHospitals(
 export function compareHospitals(ids: string[], signal?: AbortSignal) {
   return apiRequest<Hospital[], CompareMeta>(
     `/hospitals/compare?ids=${encodeURIComponent(ids.join(","))}`,
+    { signal },
+  );
+}
+
+/**
+ * Rekomendasi ber-skor (kontrak §4). Butuh ≥ 1 layanan dan lokasi
+ * (lat+lng atau kode wilayah); tanpa itu server membalas 422.
+ */
+export function getRecommendations(state: WizardState, signal?: AbortSignal) {
+  return apiRequest<Recommendation[], RecommendationMeta>(
+    `/recommendations?${buildRecommendationApiQuery(state)}`,
+    { signal },
+  );
+}
+
+/** Marker ringan di dalam bbox (maks 500, `meta.truncated`; kontrak §7). */
+export function listMarkers(
+  bbox: BBox,
+  opts: { services: string[]; bpjs: boolean; dataset: Dataset },
+  signal?: AbortSignal,
+) {
+  const params = new URLSearchParams({ bbox: bboxParam(bbox) });
+  if (opts.services.length > 0) params.set("services", opts.services.join(","));
+  if (opts.bpjs) params.set("bpjs", "true");
+  params.set("dataset", opts.dataset);
+  return apiRequest<HospitalMarker[], MarkerMeta>(
+    `/hospitals/markers?${params.toString()}`,
     { signal },
   );
 }
@@ -129,7 +166,7 @@ export function logout() {
 /* ---------------- Admin (operator) ---------------- */
 
 export function listAdminReferrals(signal?: AbortSignal) {
-  return apiRequest<Referral[]>("/admin/referrals", { signal });
+  return apiRequest<AdminReferral[]>("/admin/referrals", { signal });
 }
 
 /** RS dalam scope operator (urut sesuai server). */

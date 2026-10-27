@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import { backendBaseUrl } from "./lib/api/backend";
 
 /**
- * /api/v1/* di-rewrite ke backend (HANDOVER_PRODUCTION_v0.2.1 §2): browser
+ * /api/v1/* di-rewrite ke backend (arsip docs/archive/HANDOVER_PRODUCTION_v0.2.1.md §2): browser
  * hanya bicara ke origin FE, jadi cookie sesi operator (Path=/api/v1) bekerja
  * dan backend tidak perlu CORS. Server-only (tanpa NEXT_PUBLIC_); bawaan =
  * backend production. Staging (terkunci) ditangani proxy.ts lebih dulu.

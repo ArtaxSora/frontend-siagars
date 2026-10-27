@@ -37,8 +37,8 @@ export default function AboutDataPage() {
         <h2 className="text-[24px] font-bold leading-8">Cakupan pilot</h2>
         <p>
           Antarmuka dirancang untuk skala nasional, tetapi kelengkapan data tidak.
-          Versi 0.1 hanya memuat sejumlah rumah sakit pilot yang berhasil
-          dikurasi, dan hanya sebagian yang profilnya lengkap. Jumlah aktual
+          Saat ini SiagaRS hanya memuat rumah sakit pilot di Jabodetabek, dan
+          hanya sebagian yang profil fasilitasnya lengkap. Jumlah aktual
           ditampilkan di beranda dan pada hasil pencarian; rumah sakit di luar
           data ini tidak akan muncul.
         </p>
@@ -129,6 +129,70 @@ export default function AboutDataPage() {
         </p>
       </section>
 
+      <section id="skor-rekomendasi" className="flex scroll-mt-24 flex-col gap-3">
+        <h2 className="text-[24px] font-bold leading-8">Skor rekomendasi</h2>
+        <p className="text-muted">
+          Di <strong>Pilih RS</strong>, server memberi setiap rumah sakit skor
+          0–100 tentang <strong>kecocokan dengan kebutuhan Anda dan kepastian
+          datanya</strong> — bukan kualitas medis. Tampilan hanya menampilkan
+          skor itu apa adanya.
+        </p>
+        <ol className="flex list-decimal flex-col gap-1 pl-5 text-muted">
+          <li>
+            Rumah sakit dikeluarkan bila salah satu layanan yang Anda pilih
+            tercatat <strong>tidak tersedia</strong>, bila BPJS wajib tetapi RS
+            tercatat tidak menerima BPJS, bila di luar radius/wilayah, atau bila
+            tercatat tidak beroperasi. Jumlahnya ditampilkan di hasil.
+          </li>
+          <li>Sisanya dinilai dari lima komponen:</li>
+        </ol>
+        <dl className="grid gap-x-6 gap-y-2 rounded-md border border-line bg-surface p-4 sm:grid-cols-[max-content_1fr]">
+          <dt className="font-semibold">Layanan yang dibutuhkan · 40%</dt>
+          <dd className="text-muted">Tersedia penuh, terbatas sebagian (60%), belum diketahui rendah (20%).</dd>
+          <dt className="font-semibold">Tempat tidur · 20%</dt>
+          <dd className="text-muted">Ada yang kosong penuh, nol tidak dapat nilai, belum diketahui rendah (30%).</dd>
+          <dt className="font-semibold">Jarak · 20%</dt>
+          <dd className="text-muted">Makin dekat (garis lurus) makin tinggi; hanya bila Anda memakai lokasi.</dd>
+          <dt className="font-semibold">BPJS · 10%</dt>
+          <dd className="text-muted">Hanya bila BPJS wajib; belum diketahui rendah (30%).</dd>
+          <dt className="font-semibold">Keyakinan data · 10%</dt>
+          <dd className="text-muted">Diambil dari skor kualitas data di bawah.</dd>
+        </dl>
+        <p className="text-muted">
+          Komponen yang tidak berlaku (mis. jarak tanpa lokasi) dihapus dan
+          bobotnya dibagi ke komponen lain. Nilai layanan dan tempat tidur yang
+          berasal dari data <strong>simulasi</strong> dikali 0,8 agar tidak
+          mengalahkan data kurasi yang setara. Level: <strong>tinggi</strong>{" "}
+          ≥ 75, <strong>sedang</strong> 50–74, <strong>rendah</strong> &lt; 50.
+          Setiap kartu hasil punya tombol &ldquo;Kenapa skor ini?&rdquo; berisi
+          rincian dan daftar yang belum diketahui.
+        </p>
+      </section>
+
+      <section id="kualitas-data" className="flex scroll-mt-24 flex-col gap-3">
+        <h2 className="text-[24px] font-bold leading-8">Skor kualitas data</h2>
+        <p className="text-muted">
+          Setiap rumah sakit punya label <strong>Data baik</strong> (≥ 75),{" "}
+          <strong>Data cukup</strong> (50–74), atau{" "}
+          <strong>Data terbatas</strong> (&lt; 50). Ini menilai{" "}
+          <strong>data kami tentang rumah sakit</strong>, bukan rumah sakitnya:
+        </p>
+        <ul className="flex list-disc flex-col gap-1 pl-5 text-muted">
+          <li>
+            <strong>Kelengkapan (50%)</strong> — berapa banyak item kunci yang
+            diketahui: telepon, koordinat, BPJS, status layanan, dan tempat tidur.
+          </li>
+          <li>
+            <strong>Kesegaran (25%)</strong> — memakai data paling lama: terbaru
+            penuh, mulai lama 70%, kedaluwarsa 30%, tidak diketahui 20%.
+          </li>
+          <li>
+            <strong>Asal (25%)</strong> — kurasi tim penuh, SATUSEHAT 80%,
+            simulasi 50%.
+          </li>
+        </ul>
+      </section>
+
       <section className="flex flex-col gap-2">
         <h2 className="text-[24px] font-bold leading-8">Jarak</h2>
         <p className="text-muted">
@@ -145,6 +209,11 @@ export default function AboutDataPage() {
           Informasi BPJS berasal dari sumber yang tertera dan bukan jaminan
           kelayakan pasien. Konfirmasikan langsung ke rumah sakit dan BPJS
           Kesehatan.
+        </p>
+        <p className="text-muted">
+          Fitur <strong>Cek BPJS</strong> adalah simulasi dengan peserta
+          sintetis. Kami tidak menyimpan NIK lengkap Anda; riwayat pengecekan
+          disimpan dalam bentuk tersamar selama 30 hari.
         </p>
       </section>
 
