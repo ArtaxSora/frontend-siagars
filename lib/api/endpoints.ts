@@ -5,6 +5,8 @@
 import { apiRequest } from "@/lib/api/client";
 import type {
   AdminReferral,
+  BpjsCheckHistoryItem,
+  BpjsCheckHistoryMeta,
   BpjsCheckRequest,
   BpjsCheckResult,
   CompareMeta,
@@ -17,6 +19,11 @@ import type {
   HospitalBed,
   HospitalMarker,
   HospitalService,
+  InsightsCoverageRow,
+  InsightsFreshnessRow,
+  InsightsMeta,
+  InsightsServiceGapRow,
+  InsightsSummary,
   ListMeta,
   LoginResult,
   MarkerMeta,
@@ -38,6 +45,12 @@ import {
   buildRecommendationApiQuery,
   type WizardState,
 } from "@/lib/recommendations/wizard";
+import {
+  buildBpjsChecksQuery,
+  buildInsightsQuery,
+  type BpjsChecksQueryOptions,
+  type InsightsQueryOptions,
+} from "@/lib/insights/aggregate";
 import { bboxParam, type BBox } from "@/lib/geo/bbox";
 
 /* ---------------- Publik ---------------- */
@@ -108,6 +121,48 @@ export function listMarkers(
   );
 }
 
+/* ---------------- Wawasan Data (v0.5.0, kontrak §6) ---------------- */
+
+export function getInsightsSummary(
+  opts: Omit<InsightsQueryOptions, "service"> = {},
+  signal?: AbortSignal,
+) {
+  return apiRequest<InsightsSummary, InsightsMeta>(
+    `/insights/summary?${buildInsightsQuery(opts)}`,
+    { signal },
+  );
+}
+
+export function getInsightsCoverage(
+  opts: Omit<InsightsQueryOptions, "service"> = {},
+  signal?: AbortSignal,
+) {
+  return apiRequest<InsightsCoverageRow[], InsightsMeta>(
+    `/insights/coverage?${buildInsightsQuery(opts)}`,
+    { signal },
+  );
+}
+
+export function getInsightsServiceGaps(
+  opts: InsightsQueryOptions & { service: string },
+  signal?: AbortSignal,
+) {
+  return apiRequest<InsightsServiceGapRow[], InsightsMeta>(
+    `/insights/service-gaps?${buildInsightsQuery(opts)}`,
+    { signal },
+  );
+}
+
+export function getInsightsFreshness(
+  opts: Omit<InsightsQueryOptions, "service"> = {},
+  signal?: AbortSignal,
+) {
+  return apiRequest<InsightsFreshnessRow[], InsightsMeta>(
+    `/insights/freshness?${buildInsightsQuery(opts)}`,
+    { signal },
+  );
+}
+
 export function listServices(signal?: AbortSignal) {
   return apiRequest<ServiceMaster[]>("/services", { signal });
 }
@@ -167,6 +222,17 @@ export function logout() {
 
 export function listAdminReferrals(signal?: AbortSignal) {
   return apiRequest<AdminReferral[]>("/admin/referrals", { signal });
+}
+
+/** Riwayat cek BPJS tersamar dengan paginasi (tanpa fitur reveal, keputusan D-03). */
+export function listAdminBpjsChecks(
+  opts: BpjsChecksQueryOptions = {},
+  signal?: AbortSignal,
+) {
+  return apiRequest<BpjsCheckHistoryItem[], BpjsCheckHistoryMeta>(
+    `/admin/bpjs-checks?${buildBpjsChecksQuery(opts)}`,
+    { signal },
+  );
 }
 
 /** RS dalam scope operator (urut sesuai server). */

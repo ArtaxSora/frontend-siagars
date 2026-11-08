@@ -2,7 +2,7 @@
  * DTO kontrak API SiagaRS (/api/v1) — snake_case, timestamp RFC3339 UTC,
  * ID = UUID lowercase.
  *
- * Mengikuti API 0.4.0 (`new/03_KONTRAK_API_v1.md` §1–§5, §7). Sumber kontrak
+ * Mengikuti API 0.5.0 (`new/03_KONTRAK_API_v1.md` §1–§7). Sumber kontrak
  * resmi tetap `openapi.yaml` backend versi yang sama
  * (https://siagars-backend.vercel.app/docs). Bila berbeda, OpenAPI menang —
  * jangan mengubah enum sepihak.
@@ -320,6 +320,9 @@ export interface ReadyResult {
 export const BPJS_PARTICIPANT_STATUSES = ["active", "inactive"] as const;
 export type BpjsParticipantStatus = (typeof BPJS_PARTICIPANT_STATUSES)[number];
 
+export const BPJS_CHECK_RESULTS = ["found", "not_found"] as const;
+export type BpjsCheckResultKind = (typeof BPJS_CHECK_RESULTS)[number];
+
 /** Body POST /bpjs/check. Data pribadi hanya lewat body, tidak pernah di URL. */
 export interface BpjsCheckRequest {
   /** 16 digit angka. */
@@ -346,11 +349,33 @@ export interface BpjsParticipant {
 
 export interface BpjsCheckResult {
   /** "not_found" = data tidak cocok dengan peserta mana pun (bukan galat). */
-  result: "found" | "not_found";
+  result: BpjsCheckResultKind;
   participant: BpjsParticipant | null;
   /** Selalu "simulation" sampai ada integrasi resmi. */
   data_origin: DataOrigin;
   checked_at: string;
+}
+
+/**
+ * Entri riwayat cek BPJS tersamar (GET /admin/bpjs-checks, keputusan D-03).
+ * NIK/nama asli tidak disimpan dalam bentuk apa pun; tidak ada endpoint reveal.
+ */
+export interface BpjsCheckHistoryItem {
+  id: string;
+  nik_masked: string;
+  name_masked: string;
+  birth_year: number;
+  result: BpjsCheckResultKind;
+  status: BpjsParticipantStatus | null;
+  checked_at: string;
+  repeat_count: number;
+}
+
+export interface BpjsCheckHistoryMeta extends DetailMeta {
+  page: number;
+  limit: number;
+  total: number;
+  total_pages: number;
 }
 
 /* ---------------- Rekomendasi (API 0.4.0, kontrak §4) ---------------- */
@@ -460,4 +485,96 @@ export interface MarkerMeta {
   truncated: boolean;
   dataset: Dataset;
   as_of: string;
+}
+
+/* ---------------- Wawasan Data (API 0.5.0, kontrak §6) ---------------- */
+
+export interface InsightsSummary {
+  hospital_count: number;
+  city_count: number;
+  curated_count: number;
+  simulated_facility_count: number;
+  fresh_ratio: number;
+  with_known_bpjs_ratio: number;
+}
+
+export interface InsightsCoverageByClass {
+  A: number;
+  B: number;
+  C: number;
+  D: number;
+  unknown: number;
+}
+
+export interface InsightsCoverageRow {
+  city_code: string;
+  city_name: string;
+  hospital_count: number;
+  by_class: InsightsCoverageByClass;
+  curated_count: number;
+}
+
+export interface InsightsServiceGapRow {
+  city_code: string;
+  city_name: string;
+  available: number;
+  limited: number;
+  unavailable: number;
+  unknown: number;
+  /** true bila available + limited == 0 (kontrak §6). */
+  gap: boolean;
+}
+
+export interface InsightsFreshnessRow {
+  data_origin: DataOrigin;
+  fresh: number;
+  aging: number;
+  stale: number;
+  unknown: number;
+}
+
+export interface InsightsMeta {
+  generated_at: string;
+  sources?: string[];
+  dataset?: Dataset;
+  province_code?: string | null;
+  service?: string;
+}
+
+/* ---------------- Laporan Koreksi Data / Crowdsourcing (Feedback Mentor) ---------------- */
+
+export const REPORT_CATEGORIES = [
+  "services",
+  "beds",
+  "bpjs",
+  "phone",
+  "other",
+] as const;
+export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
+
+export const REPORT_STATUSES = [
+  "pending_review",
+  "verified",
+  "rejected",
+] as const;
+export type ReportStatus = (typeof REPORT_STATUSES)[number];
+
+export interface CrowdsourceReport {
+  id: string;
+  hospital_id: string;
+  hospital_name: string;
+  city_name: string;
+  province_name: string;
+  category: ReportCategory;
+  detail_field: string;
+  current_claim: string;
+  source_proof: string;
+  notes: string;
+  reporter_name?: string;
+  reporter_contact?: string;
+  created_at: string;
+  status: ReportStatus;
+  reviewed_at?: string | null;
+  reviewed_by?: string | null;
+  review_note?: string | null;
 }

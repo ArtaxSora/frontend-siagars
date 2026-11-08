@@ -136,10 +136,12 @@ export function HospitalCard({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Action buttons: High contrast Telepon with min 44px touch targets on mobile */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           <ButtonLink
             href={`/rumah-sakit/${encodeURIComponent(hospital.id)}`}
             variant="primary"
+            className="flex-1 sm:flex-initial min-w-[110px]"
           >
             Lihat detail
           </ButtonLink>
@@ -148,12 +150,18 @@ export function HospitalCard({
               variant="secondary"
               aria-pressed={selected}
               onClick={() => onShowOnMap(hospital.id)}
+              className="flex-1 sm:flex-initial min-w-[110px]"
             >
               <PinIcon /> Lihat di peta
             </Button>
           )}
           {tel && (
-            <ButtonLink href={tel} variant="secondary" native>
+            <ButtonLink
+              href={tel}
+              variant="emergency"
+              native
+              className="flex-1 sm:flex-initial min-w-[110px]"
+            >
               <PhoneIcon /> Telepon
             </ButtonLink>
           )}

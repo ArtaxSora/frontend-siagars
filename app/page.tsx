@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CoverageNote } from "@/features/home/coverage-note";
 import { ButtonLink } from "@/components/ui/button";
 import { inputClasses } from "@/components/ui/field";
-import { SearchIcon } from "@/components/ui/icons";
+import { FlagIcon, SearchIcon, SparklesIcon } from "@/components/ui/icons";
 import { EmergencyBanner } from "@/components/ui/decision";
 
 // Mulai asisten dengan layanan sudah terpilih (langsung ke langkah lokasi).
@@ -12,6 +12,12 @@ const QUICK_LINKS = [
   { href: "/pilih-rs?step=2&services=picu", label: "PICU" },
   { href: "/pilih-rs?step=2&services=igd-24h", label: "IGD 24 jam" },
   { href: "/pilih-rs?step=2&services=rawat-inap", label: "Rawat inap" },
+] as const;
+
+const ASSISTANT_SAMPLE_PROMPTS = [
+  "Cari RS di Bekasi yang punya NICU dan terima BPJS",
+  "RS dengan ICU di Jakarta Selatan",
+  "Cari IGD 24 jam dan rawat inap di Depok",
 ] as const;
 
 const HOW_SCORE_WORKS = [
@@ -60,10 +66,20 @@ export default function HomePage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <ButtonLink href="/pilih-rs" className="self-start px-6 text-[16px]">
-            Bantu saya pilih RS
-          </ButtonLink>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <ButtonLink href="/pilih-rs" className="px-6 text-[16px]">
+              Bantu saya pilih RS
+            </ButtonLink>
+            <ButtonLink
+              href="/asisten"
+              variant="secondary"
+              className="px-5 text-[15px] font-bold text-brand-deep hover:border-brand"
+            >
+              <SparklesIcon className="text-brand" /> Tanya Asisten AI
+            </ButtonLink>
+          </div>
+
           <div className="flex flex-col gap-2">
             <p className="text-[13px] font-semibold">Atau mulai dari layanan</p>
             <ul className="flex flex-wrap gap-2">
@@ -82,6 +98,33 @@ export default function HomePage() {
         </div>
 
         <EmergencyBanner />
+      </section>
+
+      {/* Fitur Baru: Asisten AI Box */}
+      <section
+        aria-labelledby="asisten-title"
+        className="flex flex-col gap-3.5 rounded-md border border-brand/30 bg-brand-tint/40 p-5 md:p-6"
+      >
+        <div className="flex items-center gap-2 text-brand-deep">
+          <SparklesIcon className="h-5 w-5 text-brand" />
+          <h2 id="asisten-title" className="text-[18px] font-bold leading-[26px]">
+            Cari lebih cepat dengan kalimat bebas
+          </h2>
+        </div>
+        <p className="text-[14px] leading-5 text-muted">
+          Punya kebutuhan spesifik? Tanyakan langsung ke Asisten AI SiagaRS tanpa mengisi formulir bertingkat:
+        </p>
+        <div className="flex flex-wrap gap-2 pt-1">
+          {ASSISTANT_SAMPLE_PROMPTS.map((p) => (
+            <Link
+              key={p}
+              href={`/asisten?prompt=${encodeURIComponent(p)}`}
+              className="inline-flex min-h-11 items-center rounded-lg border border-brand/20 bg-surface px-3 py-1.5 text-[13px] font-medium text-ink hover:border-brand hover:text-brand-deep"
+            >
+              &ldquo;{p}&rdquo; →
+            </Link>
+          ))}
+        </div>
       </section>
 
       <section aria-labelledby="cari-nama" className="flex flex-col gap-3 rounded-md border border-line bg-surface p-5 md:p-6">
@@ -149,23 +192,47 @@ export default function HomePage() {
         </p>
       </section>
 
-      <section
-        aria-labelledby="lacak-title"
-        className="flex flex-col gap-3 rounded-md border-[1.5px] border-dashed border-sim-line bg-surface p-5 md:flex-row md:items-center md:justify-between md:p-6"
-      >
-        <div className="flex max-w-2xl flex-col gap-1">
-          <h2 id="lacak-title" className="text-[18px] font-semibold leading-[26px]">
-            Punya kode demo rujukan?
-          </h2>
-          <p className="text-muted">
-            Lihat status dan linimasa rujukan <strong>simulasi</strong>. Tidak
-            ada rujukan resmi yang dibuat lewat prototipe ini.
-          </p>
-        </div>
-        <ButtonLink href="/lacak-rujukan" variant="secondary">
-          Lacak rujukan
-        </ButtonLink>
-      </section>
+      {/* Demo Rujukan & Koreksi Data Warga */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <section
+          aria-labelledby="lacak-title"
+          className="flex flex-col justify-between gap-3 rounded-md border-[1.5px] border-dashed border-sim-line bg-surface p-5 md:p-6"
+        >
+          <div className="flex flex-col gap-1">
+            <h2 id="lacak-title" className="text-[18px] font-semibold leading-[26px]">
+              Punya kode demo rujukan?
+            </h2>
+            <p className="text-muted">
+              Lihat status dan linimasa rujukan <strong>simulasi</strong>. Tidak
+              ada rujukan resmi yang dibuat lewat prototipe ini.
+            </p>
+          </div>
+          <ButtonLink href="/lacak-rujukan" variant="secondary" className="self-start">
+            Lacak rujukan
+          </ButtonLink>
+        </section>
+
+        <section
+          aria-labelledby="lapor-title"
+          className="flex flex-col justify-between gap-3 rounded-md border border-line bg-surface p-5 md:p-6"
+        >
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-trust">
+              <FlagIcon />
+              <h2 id="lapor-title" className="text-[18px] font-semibold leading-[26px] text-ink">
+                Koreksi Data dari Lapangan
+              </h2>
+            </div>
+            <p className="text-muted">
+              Melihat ketersediaan ranap/IGD atau nomor telepon yang berbeda di RS?
+              Laporkan koreksi untuk divalidasi operator demi menjaga kesegaran data publik.
+            </p>
+          </div>
+          <ButtonLink href="/lapor-data" variant="secondary" className="self-start">
+            Laporkan koreksi data
+          </ButtonLink>
+        </section>
+      </div>
 
       <section aria-labelledby="cara-baca" className="flex flex-col gap-4">
         <h2 id="cara-baca" className="text-[24px] font-bold leading-8 tracking-[-0.01em]">

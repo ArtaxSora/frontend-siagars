@@ -5,6 +5,7 @@ import "./globals.css";
 import { PrototypeBanner } from "@/components/ui/notices";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { FloatingAssistantButton } from "@/components/ui/floating-assistant-button";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           {children}
         </main>
+        <FloatingAssistantButton />
         <SiteFooter />
       </body>
     </html>

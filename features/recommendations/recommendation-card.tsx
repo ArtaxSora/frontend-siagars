@@ -147,25 +147,40 @@ export function RecommendationCard({
 
       <ScoreBreakdown rec={rec} serviceNames={serviceNames} />
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Action buttons: High contrast Telepon & Rute with min 44px touch targets on 360px mobile */}
+      <div className="flex flex-wrap items-center gap-2 pt-1">
         {tel ? (
-          <ButtonLink href={tel} native>
+          <ButtonLink
+            href={tel}
+            variant="emergency"
+            native
+            className="flex-1 sm:flex-initial min-w-[120px]"
+          >
             <PhoneIcon /> Telepon
           </ButtonLink>
         ) : (
-          <span className="inline-flex items-center gap-1 text-[12px] text-unk-fg">
+          <span className="inline-flex min-h-11 items-center gap-1 text-[12px] text-unk-fg">
             <QuestionIcon /> Telepon belum diketahui
           </span>
         )}
         {route && (
-          <ButtonLink href={route} variant="secondary" external>
+          <ButtonLink
+            href={route}
+            variant="route"
+            external
+            className="flex-1 sm:flex-initial min-w-[100px]"
+          >
             <RouteIcon /> Rute
           </ButtonLink>
         )}
-        <ButtonLink href={detail} variant="secondary">
+        <ButtonLink
+          href={detail}
+          variant="secondary"
+          className="flex-1 sm:flex-initial min-w-[90px]"
+        >
           Detail
         </ButtonLink>
-        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 px-1 text-[13px] font-semibold md:min-h-10">
+        <label className="inline-flex min-h-11 cursor-pointer items-center gap-2 px-2 text-[13px] font-semibold">
           <input
             type="checkbox"
             className="h-4 w-4 accent-[var(--color-brand)]"

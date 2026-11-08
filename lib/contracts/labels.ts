@@ -4,6 +4,7 @@
  */
 import type {
   BedCategory,
+  BpjsCheckResultKind,
   BpjsParticipantStatus,
   Coded,
   DataOrigin,
@@ -13,6 +14,8 @@ import type {
   Freshness,
   MarkerMatch,
   ReferralStatus,
+  ReportCategory,
+  ReportStatus,
   ScoreLevel,
   ServiceStatus,
   TrackingHistory,
@@ -122,6 +125,11 @@ export const BPJS_PARTICIPANT_STATUS_LABEL: Record<BpjsParticipantStatus, string
   inactive: "Tidak aktif",
 };
 
+export const BPJS_CHECK_RESULT_LABEL: Record<BpjsCheckResultKind, string> = {
+  found: "Ditemukan",
+  not_found: "Tidak ditemukan",
+};
+
 /* ---------------- Keputusan (API 0.4.0) ---------------- */
 
 /** Level skor kecocokan: high=ok, medium=warn, low=bad (PRD §6). */
@@ -150,4 +158,18 @@ export const EXCLUSION_REASON_LABEL: Record<ExclusionReason, string> = {
   out_of_radius: "berada di luar radius",
   location_unknown: "koordinatnya belum diketahui",
   not_operational: "tercatat tidak beroperasi",
+};
+
+export const REPORT_CATEGORY_LABEL: Record<ReportCategory, string> = {
+  services: "Ketersediaan Layanan Kritis",
+  beds: "Ketersediaan Tempat Tidur",
+  bpjs: "Status Penerimaan BPJS",
+  phone: "Kontak / Nomor Telepon RS",
+  other: "Lainnya / Profil Fasilitas",
+};
+
+export const REPORT_STATUS_LABEL: Record<ReportStatus, string> = {
+  pending_review: "Menunggu Verifikasi",
+  verified: "Terverifikasi Operator",
+  rejected: "Ditolak / Tidak Valid",
 };

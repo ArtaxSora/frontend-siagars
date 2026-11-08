@@ -17,13 +17,15 @@ import {
   safeSourceUrl,
   telHref,
 } from "@/lib/hospitals/summary";
+import { describeHospitalMetadata } from "@/lib/insights/aggregate";
 import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { SourceLine, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink } from "@/components/ui/button";
 import { DataQualityBadge } from "@/components/ui/decision";
-import { PhoneIcon, QuestionIcon, RouteIcon } from "@/components/ui/icons";
+import { FlagIcon, PhoneIcon, QuestionIcon, RouteIcon } from "@/components/ui/icons";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
+import { ShareButton } from "@/components/ui/share-button";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
 function Section({
@@ -97,6 +99,7 @@ export function HospitalDetail({ id }: { id: string }) {
   const summary = hospital.facility_summary;
   const bpjsSource = safeSourceUrl(hospital.bpjs_source_url);
   const bpjsUpdated = formatWib(hospital.bpjs_source_updated_at);
+  const shareMeta = describeHospitalMetadata(hospital);
   const profile: Array<[string, string]> = [
     ["Kelas", codedLabel(hospital.facility_class) ?? "Belum diketahui"],
     ["Jenis", codedLabel(hospital.facility_subtype) ?? "Belum diketahui"],
@@ -126,25 +129,48 @@ export function HospitalDetail({ id }: { id: string }) {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Action buttons: prominent high contrast Telepon & Rute with min 44px touch targets on mobile */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {tel ? (
-            <ButtonLink href={tel} native>
+            <ButtonLink
+              href={tel}
+              variant="emergency"
+              native
+              className="flex-1 sm:flex-initial text-[14px]"
+            >
               <PhoneIcon /> Telepon {hospital.phone}
             </ButtonLink>
           ) : (
-            <p className="inline-flex items-center gap-1 text-unk-fg">
+            <p className="inline-flex min-h-11 items-center gap-1 text-unk-fg">
               <QuestionIcon /> Nomor telepon belum diketahui
             </p>
           )}
           {route ? (
-            <ButtonLink href={route} variant="secondary" external>
+            <ButtonLink
+              href={route}
+              variant="route"
+              external
+              className="flex-1 sm:flex-initial text-[14px]"
+            >
               <RouteIcon /> Buka rute (peta eksternal)
             </ButtonLink>
           ) : (
-            <p className="inline-flex items-center gap-1 text-unk-fg">
+            <p className="inline-flex min-h-11 items-center gap-1 text-unk-fg">
               <QuestionIcon /> Koordinat belum diketahui — rute tidak tersedia
             </p>
           )}
+          <ButtonLink
+            href={`/lapor-data?hospital_id=${encodeURIComponent(hospital.id)}`}
+            variant="secondary"
+            className="flex-1 sm:flex-initial"
+          >
+            <FlagIcon /> Laporkan koreksi data
+          </ButtonLink>
+          <ShareButton
+            title={`${shareMeta.title} · SiagaRS`}
+            text={shareMeta.description}
+            url={`/rumah-sakit/${encodeURIComponent(hospital.id)}`}
+          />
         </div>
         <CapacityDisclaimer />
       </header>
@@ -245,6 +271,30 @@ export function HospitalDetail({ id }: { id: string }) {
           ))}
         </ul>
       </Section>
+
+      {/* Callout Koreksi Data Lapangan */}
+      <section
+        aria-labelledby="koreksi-rs-title"
+        className="flex flex-col gap-2.5 rounded-md border border-dashed border-line bg-surface p-4 md:p-5"
+      >
+        <div className="flex items-center gap-2 font-semibold text-ink">
+          <FlagIcon className="text-brand" />
+          <h2 id="koreksi-rs-title" className="text-[16px]">
+            Melihat perbedaan ketersediaan atau kontak di lapangan?
+          </h2>
+        </div>
+        <p className="text-[14px] leading-5 text-muted">
+          Data ketersediaan ranap/IGD rumah sakit bisa berubah setiap menit. Laporkan pembaruan
+          terkini untuk diverifikasi tim operator demi menjaga data tetap segar dan akurat bagi pasien lain.
+        </p>
+        <ButtonLink
+          href={`/lapor-data?hospital_id=${encodeURIComponent(hospital.id)}`}
+          variant="secondary"
+          className="self-start mt-1"
+        >
+          Laporkan koreksi data untuk {hospital.name}
+        </ButtonLink>
+      </section>
     </div>
   );
 }

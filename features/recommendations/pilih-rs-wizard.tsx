@@ -8,12 +8,17 @@ import { RADIUS_OPTIONS } from "@/lib/contracts/types";
 import {
   hasCoords,
   hasLocation,
+  maxReachableStep,
   parseWizardState,
   roundCoord,
   serializeWizardState,
   type WizardState,
   type WizardStep,
 } from "@/lib/recommendations/wizard";
+import {
+  QuickScenarios,
+  type UrgentScenario,
+} from "@/features/recommendations/quick-scenarios";
 import { RecommendationResults } from "@/features/recommendations/recommendation-results";
 import { Button } from "@/components/ui/button";
 import { WizardStepper } from "@/components/ui/decision";
@@ -77,6 +82,7 @@ function StepPanel({
  * Asisten Pilih RS (FE-10): 3 langkah → hasil. Semua isian di URL; pindah
  * langkah = entri riwayat baru (tombol kembali peramban = langkah sebelumnya),
  * perubahan isian dalam satu langkah mengganti entri yang sama.
+ * Dilengkapi Skenario Cepat (1-Klik) untuk kondisi stres/darurat tinggi.
  */
 export function PilihRsWizard() {
   const router = useRouter();
@@ -99,6 +105,21 @@ export function PilihRsWizard() {
   }
   const update = (patch: Partial<WizardState>) => go({ ...state, ...patch }, "replace");
   const toStep = (step: WizardStep) => go({ ...state, step }, "push");
+
+  function handleSelectScenario(sc: UrgentScenario) {
+    const nextState: WizardState = {
+      ...state,
+      services: sc.services,
+      bpjs: sc.bpjs,
+      dataset: sc.dataset,
+      step: hasLocation(state) ? "hasil" : 2,
+    };
+    go(nextState, "push");
+  }
+
+  function handleResetScenario() {
+    go({ ...state, services: [], bpjs: "any", dataset: "real", step: 1 }, "push");
+  }
 
   /* ---- Lokasi: hanya setelah klik pengguna ---- */
   const [geoLoading, setGeoLoading] = useState(false);
@@ -136,7 +157,19 @@ export function PilihRsWizard() {
 
   return (
     <div className="flex flex-col gap-5">
-      <WizardStepper steps={STEP_LABELS} current={stepPosition(state.step)} />
+      {/* Skenario Cepat (1-Klik) untuk situasi stres/darurat tinggi */}
+      <QuickScenarios
+        state={state}
+        onSelect={handleSelectScenario}
+        onReset={handleResetScenario}
+      />
+
+      <WizardStepper
+        steps={STEP_LABELS}
+        current={stepPosition(state.step)}
+        maxReachable={stepPosition(maxReachableStep(state))}
+        onStepClick={(stepNum) => toStep(stepNum)}
+      />
 
       {state.step === 1 && (
         <StepPanel

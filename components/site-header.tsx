@@ -6,9 +6,11 @@ import { usePathname } from "next/navigation";
 import { CrossIcon, MenuIcon } from "@/components/ui/icons";
 
 const LINKS = [
+  { href: "/asisten", label: "Asisten AI" },
   { href: "/pilih-rs", label: "Pilih RS" },
   { href: "/rumah-sakit", label: "Cari RS" },
   { href: "/bandingkan", label: "Bandingkan" },
+  { href: "/wawasan", label: "Wawasan" },
   { href: "/lacak-rujukan", label: "Lacak rujukan" },
   { href: "/cek-bpjs", label: "Cek BPJS" },
   { href: "/tentang-data", label: "Tentang data" },
