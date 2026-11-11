@@ -42,7 +42,7 @@ export default function HomePage() {
           {/* Tombol Tindakan Utama */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Link
-              href="/pilih-rs"
+              href="/rumah-sakit"
               className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-6 text-sm font-bold text-white shadow-xs transition-colors hover:bg-brand-deep"
             >
               <SparklesIcon className="h-4 w-4" />
