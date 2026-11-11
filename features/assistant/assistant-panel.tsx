@@ -36,7 +36,7 @@ export function AssistantProvider({ children }: { children: ReactNode }) {
   return (
     <AssistantContext.Provider value={show}>
       {children}
-      <AssistantTrigger className="assistant-launcher"><ChatIcon /><span>Tanya asisten</span></AssistantTrigger>
+      <AssistantTrigger className="assistant-launcher"><ChatIcon /><span>Tanya Asisten AI</span></AssistantTrigger>
       <dialog ref={dialog} id="assistant-panel" aria-labelledby="assistant-title" className="assistant-panel" onClose={() => setOpen(false)} onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
         <div className="assistant-panel-inner">
           <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line px-5 py-4">
