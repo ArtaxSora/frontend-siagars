@@ -2,7 +2,7 @@
 
 /**
  * Peta tile sederhana tanpa library (Web Mercator).
- * - Pan: seret / tombol panah; zoom: tombol +/− atau tombol keyboard + dan −.
+ * - Pan: seret / tombol panah; zoom: scroll, tombol +/− atau keyboard.
  * - Marker adalah <button> yang dapat difokus; memilih marker memilih kartu.
  * - Jika tile gagal dimuat, marker tetap ada dan daftar tetap dapat dipakai.
  *
@@ -135,6 +135,37 @@ export default function TileMap({
 
   const reportView = useEffectEvent((v: MapView) => onViewChange?.(v));
   useEffect(() => {
+    const element = containerRef.current;
+    if (!element) return;
+    let accumulated = 0;
+    let lastEvent = 0;
+    let lastZoom = -Infinity;
+    function onWheel(event: WheelEvent) {
+      // Preserve browser accessibility zoom and horizontal trackpad scrolling.
+      if (event.ctrlKey || event.metaKey || Math.abs(event.deltaX) > Math.abs(event.deltaY) || event.deltaY === 0) return;
+      event.preventDefault();
+      const now = performance.now();
+      if (now - lastEvent > 200 || Math.sign(accumulated) !== Math.sign(event.deltaY)) accumulated = 0;
+      lastEvent = now;
+      const rect = element!.getBoundingClientRect();
+      accumulated += event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? rect.height : 1);
+      if (Math.abs(accumulated) < 40 || now - lastZoom < 160) return;
+      const direction = accumulated < 0 ? 1 : -1;
+      accumulated = 0;
+      lastZoom = now;
+      const x = event.clientX - rect.left - rect.width / 2;
+      const y = event.clientY - rect.top - rect.height / 2;
+      setView((current) => {
+        const zoom = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, current.zoom + direction));
+        if (zoom === current.zoom) return current;
+        const anchor = panCenter(current.center, current.zoom, -x, -y);
+        return { zoom, center: panCenter(anchor, zoom, x, y) };
+      });
+    }
+    element.addEventListener("wheel", onWheel, { passive: false });
+    return () => element.removeEventListener("wheel", onWheel);
+  }, []);
+  useEffect(() => {
     reportView({ center: view.center, zoom: view.zoom, width: size.w, height: size.h });
   }, [view.center, view.zoom, size.w, size.h]);
 
@@ -202,7 +233,7 @@ export default function TileMap({
         ref={containerRef}
         role="group"
         tabIndex={0}
-        aria-label="Peta lokasi rumah sakit pada halaman ini. Gunakan tombol panah untuk menggeser, plus dan minus untuk zoom."
+        aria-label="Peta lokasi rumah sakit pada halaman ini. Scroll untuk zoom, tombol panah untuk menggeser, plus dan minus untuk zoom."
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
@@ -247,7 +278,7 @@ export default function TileMap({
                 selected
                   ? "h-9 w-9 bg-brand-deep ring-2 ring-brand"
                   : m.info
-                    ? `h-7 w-7 ${MATCH_STYLE[m.info.match]} ${m.info.simulated ? "outline-dashed outline-[1.5px] outline-sim-line" : ""}`
+                    ? `h-7 w-7 ${MATCH_STYLE[m.info.match]} ${m.info.simulated ? "outline outline-1 outline-sim-line" : ""}`
                     : "h-7 w-7 bg-trust hover:bg-trust-action"
               }`}
             >

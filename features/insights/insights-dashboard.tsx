@@ -294,7 +294,7 @@ export function InsightsDashboard() {
                 value={formatRatio(bundle.summary.with_known_bpjs_ratio)}
                 badge={
                   bundle.summary.simulated_facility_count > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-lg border-[1.5px] border-dashed border-sim-line bg-sim-bg px-2 py-0.5 text-[11px] font-bold text-sim-fg">
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-sim-line bg-sim-bg px-2 py-0.5 text-[11px] font-bold text-sim-fg">
                       <FlaskIcon />
                       {bundle.summary.simulated_facility_count} fasilitas simulasi
                     </span>

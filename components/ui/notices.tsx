@@ -9,9 +9,9 @@ export function PrototypeBanner() {
     <div
       role="note"
       // Sticky hanya md+: di ponsel banner dua baris akan memakan layar terus-menerus.
-      className="border-b border-banner-line bg-banner-bg md:sticky md:top-0 md:z-40"
+      className="border-b border-line bg-well md:sticky md:top-0 md:z-40"
     >
-      <p className="mx-auto flex max-w-[1280px] items-start gap-2 px-4 py-2 text-[12px] font-semibold leading-[18px] text-banner-fg md:px-8">
+      <p className="mx-auto flex max-w-[1280px] items-start gap-2 px-4 py-2 text-[12px] font-semibold leading-[18px] text-muted md:px-8">
         <AlertIcon className="mt-0.5 shrink-0" />
         <span>Prototipe — data pilot terbatas, bukan layanan resmi gawat darurat.</span>
       </p>
@@ -27,7 +27,7 @@ export function SimulationNotice() {
   return (
     <p
       role="note"
-      className="flex items-start gap-2 rounded-md border-[1.5px] border-dashed border-sim-line bg-sim-bg px-3 py-2 text-[12px] leading-[18px] text-sim-fg"
+      className="flex items-start gap-2 rounded-md border border-sim-line bg-sim-bg px-3 py-2 text-[12px] leading-[18px] text-sim-fg"
     >
       <FlaskIcon className="mt-0.5 shrink-0" />
       <span>

@@ -18,6 +18,8 @@ import type { Hospital } from "@/lib/contracts/types";
 import Link from "next/link";
 import { HospitalCard } from "@/features/hospitals/hospital-card";
 import { HospitalFilters } from "@/features/hospitals/hospital-filters";
+import { QuickScenarios } from "@/features/recommendations/quick-scenarios";
+import { EMPTY_WIZARD } from "@/lib/recommendations/wizard";
 import { HospitalSuggestInput } from "@/features/hospitals/hospital-suggest";
 import { HospitalMap } from "@/features/hospitals/map/hospital-map";
 import { Button } from "@/components/ui/button";
@@ -211,6 +213,16 @@ export function HospitalSearch() {
           <SearchIcon /> Cari
         </Button>
       </form>
+
+      <QuickScenarios
+        state={{ ...EMPTY_WIZARD, services: query.services, bpjs: query.bpjs ? "required" : "any", dataset: query.dataset === "real" ? "real" : "all" }}
+        searchMode
+        onSelect={(scenario) => {
+          if (debounceRef.current) clearTimeout(debounceRef.current);
+          navigate(applyFilterChange(query, { q: text.trim(), services: scenario.services, bpjs: scenario.bpjs === "required", dataset: scenario.dataset }));
+        }}
+        onReset={() => navigate(applyFilterChange(query, { services: [], bpjs: false }))}
+      />
 
       <HospitalFilters
         query={query}

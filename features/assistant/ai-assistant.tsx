@@ -7,11 +7,12 @@ import { listRegions, getRecommendations } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
 import type { Province, Recommendation } from "@/lib/contracts/types";
 import { parseAssistantQuery, type ParsedAssistantQuery } from "@/lib/ai/nlp-parser";
-import { serializeWizardState, type WizardState } from "@/lib/recommendations/wizard";
+import { type WizardState } from "@/lib/recommendations/wizard";
+import { searchHrefFromRecommendation } from "@/lib/hospitals/from-recommendation";
 import { RecommendationCard } from "@/features/recommendations/recommendation-card";
 import { Button, ButtonLink } from "@/components/ui/button";
 import { inputClasses } from "@/components/ui/field";
-import { AlertIcon, PhoneIcon, SparklesIcon } from "@/components/ui/icons";
+import { AlertIcon, PhoneIcon } from "@/components/ui/icons";
 import { LoadingBlock } from "@/components/ui/states";
 
 const QUICK_PROMPTS = [
@@ -32,9 +33,9 @@ interface ChatTurn {
   error?: string | null;
 }
 
-export function AiAssistant() {
+export function AiAssistant({ compact = false }: { compact?: boolean }) {
   const searchParams = useSearchParams();
-  const initialPrompt = searchParams.get("prompt") ?? "";
+  const initialPrompt = compact ? "" : searchParams.get("prompt") ?? "";
 
   const regions = useApiResource("regions", (signal) => listRegions(signal));
   const provinces: Province[] = useMemo(
@@ -47,22 +48,28 @@ export function AiAssistant() {
     {
       id: "turn-welcome",
       sender: "assistant",
-      text: "Halo! Saya Asisten AI SiagaRS. Anda bisa bertanya dalam bahasa sehari-hari untuk mencari rumah sakit yang sesuai kebutuhan gawat darurat atau rawat inap Anda. Jawaban kami ambil langsung dari data ketersediaan riil SiagaRS.",
+      text: "Sebutkan layanan dan wilayah yang Anda cari. Misalnya, NICU di Bekasi yang menerima BPJS. Saya akan mencocokkannya dengan data pilot SiagaRS, termasuk data simulasi yang selalu diberi label.",
     },
   ]);
 
   const [compareIds, setCompareIds] = useState<string[]>([]);
   const executedInitialRef = useRef(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
+  const pendingRef = useRef(false);
+  const [sending, setSending] = useState(false);
+  const threadRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    threadEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  const scrollToBottom = useCallback(() => {
+    if (compact && threadRef.current) threadRef.current.scrollTop = threadRef.current.scrollHeight;
+    else threadEndRef.current?.scrollIntoView({ behavior: "instant", block: "nearest" });
+  }, [compact]);
 
   const handleSend = useCallback(
     async (promptToSend: string) => {
       const raw = promptToSend.trim();
-      if (!raw) return;
+      if (!raw || pendingRef.current || regions.loading || regions.error) return;
+      pendingRef.current = true;
+      setSending(true);
 
       const userTurnId = `u-${Date.now()}`;
       const assistantTurnId = `a-${Date.now()}`;
@@ -127,10 +134,12 @@ export function AiAssistant() {
               : m,
           ),
         );
+      } finally {
+        pendingRef.current = false;
+        setSending(false);
       }
-      setTimeout(scrollToBottom, 100);
     },
-    [provinces],
+    [provinces, regions.loading, regions.error, scrollToBottom],
   );
 
   useEffect(() => {
@@ -151,19 +160,18 @@ export function AiAssistant() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className={compact ? "assistant-chat" : "flex flex-col gap-6"}>
+      <div ref={threadRef} className={compact ? "assistant-scroll" : "flex flex-col gap-6"}>
       {/* Header & Disclaimer */}
-      <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-5 md:p-6">
+      {!compact && <div className="flex flex-col gap-3 border-b border-line pb-6">
         <div className="flex items-center gap-2 text-brand">
-          <SparklesIcon className="h-5 w-5 text-brand" />
           <h1 className="text-[24px] font-bold tracking-[-0.01em] text-ink md:text-[28px]">
             Asisten AI Pencari Rumah Sakit
           </h1>
         </div>
         <p className="text-[15px] leading-6 text-muted">
-          Ketik kebutuhan Anda dalam kalimat bebas. Asisten kami mengekstrak
-          kebutuhan layanan dan lokasi secara deterministik dan mencocokkannya
-          langsung dengan data ketersediaan riil SiagaRS.
+          Sebutkan layanan dan wilayah Anda. Asisten mencocokkannya dengan
+          data pilot SiagaRS beserta sumber dan batas informasinya.
         </p>
 
         {/* Banner Wajib: Bukan diagnosis medis */}
@@ -174,12 +182,12 @@ export function AiAssistant() {
         >
           <span className="font-bold">Penting:</span>
           <span>
-            Bukan diagnosis atau saran medis. Jawaban diambil langsung dari data
-            ketersediaan dan kepastian riil SiagaRS untuk membantu percepatan
-            pencarian rujukan fasilitas kesehatan.
+            Bukan diagnosis atau saran medis. Data pilot mencakup simulasi;
+            hubungi rumah sakit untuk memastikan ketersediaan.
           </span>
         </div>
-      </div>
+      </div>}
+      {compact && <p className="text-xs leading-5 text-muted">Bukan saran medis. Data dapat mencakup simulasi. Darurat? Hubungi <a href="tel:112" className="font-bold text-bad-fg underline">112</a>.</p>}
 
       {/* Quick Prompts */}
       <div className="flex flex-col gap-2">
@@ -187,12 +195,13 @@ export function AiAssistant() {
           Pilihan pertanyaan cepat:
         </span>
         <div className="flex flex-wrap gap-2">
-          {QUICK_PROMPTS.map((q) => (
+          {QUICK_PROMPTS.slice(0, compact ? 2 : 4).map((q) => (
             <button
               key={q}
               type="button"
               onClick={() => handleSend(q)}
-              className="inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-3 py-1.5 text-left text-[13px] font-medium text-ink hover:border-brand hover:bg-brand-tint hover:text-brand-deep"
+              disabled={sending || regions.loading || !!regions.error}
+              className="inline-flex min-h-11 items-center rounded-lg border border-line bg-surface px-3 py-2 text-left text-[13px] font-medium text-ink hover:border-brand hover:bg-brand-tint disabled:opacity-50"
             >
               &ldquo;{q}&rdquo;
             </button>
@@ -204,7 +213,7 @@ export function AiAssistant() {
       <div
         role="log"
         aria-live="polite"
-        className="flex flex-col gap-4 rounded-md border border-line bg-canvas p-4 md:p-6"
+        className="flex flex-col gap-5"
       >
         {messages.map((turn) => {
           if (turn.sender === "user") {
@@ -220,7 +229,7 @@ export function AiAssistant() {
           // Assistant Turn
           return (
             <div key={turn.id} className="flex flex-col gap-3">
-              <div className="flex max-w-3xl flex-col gap-3 rounded-2xl rounded-bl-none border border-line bg-surface p-4 text-[14px] leading-6 text-ink shadow-sm">
+              <div className="flex min-w-0 max-w-3xl flex-col gap-3 text-[14px] leading-6 text-ink">
                 {turn.text && <p>{turn.text}</p>}
 
                 {/* Indikator Gawat Darurat (Guardrail Red Flag) */}
@@ -291,22 +300,22 @@ export function AiAssistant() {
                           Coba luaskan wilayah pencarian atau hapus filter BPJS
                           untuk melihat fasilitas lainnya.
                         </p>
-                        <ButtonLink href="/pilih-rs" variant="secondary" className="self-center mt-2">
-                          Buka Wizard Pilih RS
+                        <ButtonLink href="/rumah-sakit" variant="secondary" className="self-center mt-2">
+                          Buka pencarian rumah sakit
                         </ButtonLink>
                       </div>
                     ) : (
                       <>
-                        <div className="flex items-center justify-between">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-[13px] font-semibold text-ink">
                             Rekomendasi teratas ({turn.recommendations.length} RS ditemukan):
                           </span>
                           {turn.recommendationState && (
                             <Link
-                              href={`/pilih-rs?${serializeWizardState(turn.recommendationState)}`}
+                              href={searchHrefFromRecommendation(turn.recommendationState)}
                               className="text-[13px] font-semibold text-trust hover:underline"
                             >
-                              Lihat semua di Pilih RS →
+                              Cari RS dengan filter ini
                             </Link>
                           )}
                         </div>
@@ -342,11 +351,11 @@ export function AiAssistant() {
                         {turn.recommendationState && (
                           <div className="pt-2">
                             <ButtonLink
-                              href={`/pilih-rs?${serializeWizardState(turn.recommendationState)}`}
+                              href={searchHrefFromRecommendation(turn.recommendationState)}
                               variant="secondary"
                               className="w-full justify-center"
                             >
-                              Lihat rincian lengkap & saring di Pilih RS ({turn.recommendations.length} RS)
+                              Lanjutkan ke Cari RS
                             </ButtonLink>
                           </div>
                         )}
@@ -360,6 +369,8 @@ export function AiAssistant() {
         })}
         <div ref={threadEndRef} />
       </div>
+      </div>
+      {regions.error && <div role="alert" className="px-5 py-2 text-sm text-bad-fg">Daftar wilayah belum tersedia. <button type="button" onClick={regions.reload} className="min-h-11 font-semibold underline">Coba lagi</button></div>}
 
       {/* Input Form */}
       <form
@@ -367,21 +378,21 @@ export function AiAssistant() {
           e.preventDefault();
           handleSend(input);
         }}
-        className="sticky bottom-4 z-20 flex gap-2 rounded-xl border border-line bg-surface p-2 shadow-level3 md:p-3"
+        className={compact ? "assistant-composer" : "sticky bottom-4 z-20 flex gap-2 rounded-xl border border-line bg-surface p-3"}
       >
-        <label htmlFor="assistant-input" className="sr-only">
+        <label htmlFor={compact ? "assistant-panel-input" : "assistant-input"} className="sr-only">
           Tanyakan pada Asisten AI SiagaRS
         </label>
         <input
-          id="assistant-input"
+          id={compact ? "assistant-panel-input" : "assistant-input"}
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Tulis pertanyaan (mis. 'RS dengan NICU di Bekasi terima BPJS')…"
-          className={`${inputClasses} flex-1 border-0 bg-transparent shadow-none focus:ring-0`}
+          placeholder="Contoh: NICU di Bekasi, BPJS"
+          className={`${inputClasses} min-w-0 flex-1`}
         />
-        <Button type="submit" disabled={!input.trim()}>
-          Kirim
+        <Button type="submit" disabled={!input.trim() || sending || regions.loading || !!regions.error}>
+          {sending ? "Mencari…" : "Kirim"}
         </Button>
       </form>
 
@@ -390,7 +401,7 @@ export function AiAssistant() {
         <aside
           role="region"
           aria-label="Bandingkan pilihan"
-          className="fixed bottom-20 left-4 right-4 z-40 mx-auto max-w-[800px] rounded-lg border border-brand bg-brand-deep px-4 py-3 text-white shadow-level3"
+          className={compact ? "shrink-0 border-t border-line bg-brand-tint p-4 text-ink" : "sticky bottom-20 z-20 rounded-lg bg-brand-deep px-4 py-3 text-white"}
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-[14px] font-semibold">
@@ -400,7 +411,7 @@ export function AiAssistant() {
               <Button
                 variant="tertiary"
                 onClick={() => setCompareIds([])}
-                className="text-white hover:text-white/80"
+                className={compact ? "text-brand-deep" : "text-white hover:text-white/80"}
               >
                 Batal
               </Button>

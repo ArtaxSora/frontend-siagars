@@ -103,7 +103,7 @@ export function RecommendationCard({
       aria-labelledby={`rec-${h.id}`}
       className={`flex flex-col gap-3 rounded-md bg-surface p-4 ${
         simulated
-          ? "border-[1.5px] border-dashed border-sim-line"
+          ? "border border-sim-line"
           : "border border-line shadow-level2"
       }`}
     >

@@ -1,29 +1,19 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
-import { PilihRsWizard } from "@/features/recommendations/pilih-rs-wizard";
-import { LoadingBlock } from "@/components/ui/states";
+import { redirect } from "next/navigation";
+import { parseWizardState } from "@/lib/recommendations/wizard";
+import { searchHrefFromRecommendation } from "@/lib/hospitals/from-recommendation";
 
-export const metadata: Metadata = {
-  title: "Bantu saya pilih RS",
-  description:
-    "Sebutkan layanan yang dibutuhkan dan lokasi pasien; SiagaRS mengurutkan rumah sakit yang paling cocok beserta alasan skornya.",
-};
+type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 
-export default function PilihRsPage() {
-  return (
-    <div className="mx-auto flex max-w-3xl flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-[28px] font-bold leading-9 tracking-[-0.01em] md:text-[36px] md:leading-[44px] md:tracking-[-0.02em]">
-          Bantu saya pilih RS
-        </h1>
-        <p className="text-muted">
-          Tiga langkah singkat. Skor menunjukkan kecocokan dengan kebutuhan Anda
-          dan seberapa pasti datanya — bukan kualitas medis rumah sakit.
-        </p>
-      </div>
-      <Suspense fallback={<LoadingBlock label="Memuat asisten…" rows={2} />}>
-        <PilihRsWizard />
-      </Suspense>
-    </div>
-  );
+async function LegacySearch({ searchParams }: Props) {
+  const params = await searchParams;
+  const state = parseWizardState({ get: (key) => {
+    const value = params[key];
+    return Array.isArray(value) ? value[0] ?? null : value ?? null;
+  } });
+  return redirect(searchHrefFromRecommendation(state));
+}
+
+export default function PilihRsPage(props: Props) {
+  return <Suspense fallback={<p>Membuka pencarian rumah sakit…</p>}><LegacySearch {...props} /></Suspense>;
 }

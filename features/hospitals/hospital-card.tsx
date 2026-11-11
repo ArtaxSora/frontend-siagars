@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Hospital } from "@/lib/contracts/types";
-import { FACILITY_SERVICE_SLUGS, bedCategoryLabel } from "@/lib/contracts/labels";
+import { FACILITY_SERVICE_SLUGS, bedCategoryLabel, ORIGIN_LABEL } from "@/lib/contracts/labels";
 import { formatDistanceKm } from "@/lib/format/beds";
 import {
   cardBeds,
@@ -13,10 +13,9 @@ import {
 } from "@/lib/hospitals/summary";
 import { BedTile } from "@/features/hospitals/bed-tile";
 import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
-import { FreshnessLabel, OriginBadge, StatusBadge } from "@/components/ui/badges";
+import { FreshnessLabel, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink, Button } from "@/components/ui/button";
 import { DataQualityBadge } from "@/components/ui/decision";
-import { PhoneIcon, PinIcon } from "@/components/ui/icons";
 
 export function HospitalCard({
   hospital,
@@ -49,7 +48,6 @@ export function HospitalCard({
   );
   const known = otherServices.filter((s) => s.status !== "unknown");
   const unknownCount = otherServices.length - known.length;
-  // Kartu berbasis data simulasi: garis putus-putus amber, tanpa bayangan (DESIGN.md).
   // Sejak API 0.2.1 RS nyata bisa membawa data fasilitas/BPJS contoh.
   const hasSimulation = hasSimulatedData(hospital);
   if (hasSimulation && !origins.includes("simulation")) origins.push("simulation");
@@ -58,13 +56,9 @@ export function HospitalCard({
     <article
       id={`hospital-card-${hospital.id}`}
       aria-current={selected ? "true" : undefined}
-      className={`flex flex-col rounded-md bg-surface ${
-        hasSimulation
-          ? "border-[1.5px] border-dashed border-sim-line"
-          : "border border-line hover:border-line-strong hover:shadow-level2"
-      } ${selected ? "outline outline-[3px] outline-offset-2 outline-brand" : ""}`}
+      className={`flex flex-col overflow-hidden rounded-xl border border-line bg-surface hover:border-line-strong ${selected ? "outline outline-[3px] outline-offset-2 outline-brand" : ""}`}
     >
-      <div className="flex flex-col gap-3 p-4">
+      <div className="flex flex-col gap-4 p-5">
         <header className="flex flex-col gap-1">
           <h3 className="text-[18px] font-semibold leading-[26px] text-ink">
             <Link
@@ -82,12 +76,13 @@ export function HospitalCard({
           </p>
           <p className="text-[13px] font-semibold leading-4">
             <BpjsStatus
+              quiet
               accepted={hospital.facility_summary.bpjs}
               origin={hospital.bpjs_data_origin}
             />
           </p>
           <div>
-            <DataQualityBadge quality={hospital.data_quality} />
+            <DataQualityBadge quality={hospital.data_quality} quiet />
           </div>
         </header>
 
@@ -98,6 +93,7 @@ export function HospitalCard({
         >
           {cardBeds(hospital).map(({ category, bed }) => (
             <BedTile
+              quiet
               key={category}
               label={bedCategoryLabel(category)}
               available={bed ? bed.available : null}
@@ -108,21 +104,19 @@ export function HospitalCard({
 
         <div className="flex flex-col gap-1.5">
           <p className="text-[11px] font-semibold tracking-[0.02em] text-faint">
-            FASILITAS
+            Status fasilitas
           </p>
-          <FacilityBadges summary={hospital.facility_summary} />
+          <FacilityBadges summary={hospital.facility_summary} quiet />
         </div>
 
-        <div className="flex flex-col gap-1.5">
-          <p className="text-[11px] font-semibold tracking-[0.02em] text-faint">
-            LAYANAN LAIN
-          </p>
+        <details className="border-t border-line pt-2">
+          <summary className="min-h-11 cursor-pointer py-2 text-[13px] font-semibold text-muted">Layanan lainnya</summary>
           {known.length > 0 ? (
             <ul className="flex flex-wrap gap-x-4 gap-y-1.5">
               {known.map((s) => (
                 <li key={s.slug} className="flex items-center gap-1.5">
                   <span className="text-ink">{s.name}</span>
-                  <StatusBadge status={s.status} />
+                  <StatusBadge status={s.status} quiet />
                 </li>
               ))}
             </ul>
@@ -134,7 +128,7 @@ export function HospitalCard({
               {unknownCount} layanan lain belum diketahui.
             </p>
           )}
-        </div>
+        </details>
 
         {/* Action buttons: High contrast Telepon with min 44px touch targets on mobile */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
@@ -147,22 +141,22 @@ export function HospitalCard({
           </ButtonLink>
           {onShowOnMap && isMappable(hospital) && (
             <Button
-              variant="secondary"
+              variant="tertiary"
               aria-pressed={selected}
               onClick={() => onShowOnMap(hospital.id)}
               className="flex-1 sm:flex-initial min-w-[110px]"
             >
-              <PinIcon /> Lihat di peta
+              Lihat di peta
             </Button>
           )}
           {tel && (
             <ButtonLink
               href={tel}
-              variant="emergency"
+              variant="secondary"
               native
               className="flex-1 sm:flex-initial min-w-[110px]"
             >
-              <PhoneIcon /> Telepon
+              Telepon
             </ButtonLink>
           )}
         </div>
@@ -190,9 +184,8 @@ export function HospitalCard({
       </div>
 
       <footer className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-b-md border-t border-line bg-canvas px-4 py-2.5">
-        {origins.map((o) => (
-          <OriginBadge key={o} origin={o} />
-        ))}
+        {hasSimulation && <p className="w-full text-[12px] leading-5 text-sim-fg"><strong>Memuat data simulasi.</strong> Data contoh untuk demo, bukan fakta rumah sakit ini.</p>}
+        <span className="text-[12px] text-muted">Sumber: {origins.map((o) => ORIGIN_LABEL[o]).join(" · ")}</span>
         <span className="inline-flex items-center gap-1 text-[12px] text-muted">
           Data paling lama:
           <FreshnessLabel freshness={worst} />

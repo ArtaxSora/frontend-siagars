@@ -2,10 +2,9 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-import { PrototypeBanner } from "@/components/ui/notices";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
-import { FloatingAssistantButton } from "@/components/ui/floating-assistant-button";
+import { AssistantProvider } from "@/features/assistant/assistant-panel";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -31,22 +30,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col">
+        <AssistantProvider>
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-14 focus:z-50 focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:font-semibold focus:shadow-level3"
         >
           Lewati ke konten utama
         </a>
-        <PrototypeBanner />
         <SiteHeader />
         <main
           id="main-content"
-          className="mx-auto w-full max-w-[1280px] flex-1 px-4 py-6 md:px-8 md:py-8"
+          className="mx-auto w-full max-w-[1280px] flex-1 px-5 py-8 md:px-8 md:py-12"
         >
           {children}
         </main>
-        <FloatingAssistantButton />
         <SiteFooter />
+        </AssistantProvider>
       </body>
     </html>
   );

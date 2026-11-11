@@ -77,13 +77,13 @@ export function DataQualityTag({ label }: { label: DataQualityLabel }) {
  * Kualitas DATA (bukan kualitas layanan RS) + penjelasan yang bisa dibuka.
  * <details> agar dapat dipakai keyboard & pembaca layar tanpa JavaScript.
  */
-export function DataQualityBadge({ quality }: { quality: DataQuality }) {
+export function DataQualityBadge({ quality, quiet = false }: { quality: DataQuality; quiet?: boolean }) {
   return (
     <details className="group relative inline-block max-w-full">
       <summary
-        className={`inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 rounded-lg border px-2.5 text-[12px] font-bold leading-4 md:min-h-8 [&::-webkit-details-marker]:hidden ${QUALITY_STYLE[quality.label]}`}
+        className={`inline-flex min-h-11 cursor-pointer list-none items-center gap-1.5 text-[12px] font-semibold leading-4 [&::-webkit-details-marker]:hidden ${quiet ? "text-muted underline decoration-line-strong underline-offset-4" : `rounded-lg border px-2.5 ${QUALITY_STYLE[quality.label]}`}`}
       >
-        {QUALITY_ICON[quality.label]}
+        {!quiet && QUALITY_ICON[quality.label]}
         <span>
           {DATA_QUALITY_LABEL[quality.label]}{" "}
           <span className="tabular-nums">{quality.score}/100</span>
