@@ -2,6 +2,7 @@
 import { Suspense, useRef, useState } from "react";
 import Link from "next/link";
 import { SiteLogo } from "@/components/site-logo";
+import { OperatorAccount } from "@/features/operator/operator-account";
 import { usePathname } from "next/navigation";
 import { CrossIcon, MenuIcon } from "@/components/ui/icons";
 
@@ -20,6 +21,7 @@ function Header({ pathname }: { pathname: string | null }) {
   const [open, setOpen] = useState(false);
   const [menuPath, setMenuPath] = useState(pathname);
   const trigger = useRef<HTMLButtonElement>(null);
+  const operatorPanel = pathname?.startsWith("/operator") && pathname !== "/operator/login";
   if (menuPath !== pathname) { setMenuPath(pathname); setOpen(false); }
   return (
     <header className="site-header" onKeyDown={(e) => {
@@ -27,6 +29,10 @@ function Header({ pathname }: { pathname: string | null }) {
     }}>
       <div className="site-header-inner">
         <Link href="/" aria-label="SiagaRS, beranda" className="site-wordmark gap-1"><SiteLogo /><span><strong className="font-extrabold">Siaga</strong>RS</span></Link>
+        {operatorPanel ? <>
+          <Link href="/rumah-sakit" className="ml-3 hidden min-h-11 items-center text-sm text-muted hover:text-brand-deep md:inline-flex">Kembali ke situs</Link>
+          <OperatorAccount />
+        </> : <>
         <span className="hidden border-l border-line pl-5 text-[13px] text-muted xl:block">Informasi jelas. Pilihan lebih tepat.</span>
         <button ref={trigger} type="button" className="menu-toggle" aria-expanded={open} aria-controls="site-nav" onClick={() => setOpen(!open)}>
           {open ? <CrossIcon /> : <MenuIcon />} Menu
@@ -37,6 +43,7 @@ function Header({ pathname }: { pathname: string | null }) {
             return <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)}>{label}</Link>;
           })}
         </nav>
+        </>}
       </div>
     </header>
   );
