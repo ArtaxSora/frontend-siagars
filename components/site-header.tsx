@@ -11,7 +11,7 @@ const LINKS = [
   { href: "/cek-bpjs", label: "Cek BPJS" },
   { href: "/bandingkan", label: "Bandingkan" },
   { href: "/wawasan", label: "Wawasan" },
-  { href: "/tentang-data", label: "Tentang data" },
+  // { href: "/tentang-data", label: "Tentang data" },
 ] as const;
 
 export function SiteHeader() {
@@ -43,7 +43,7 @@ function Header({ pathname }: { pathname: string | null }) {
             return <Link key={href} href={href} aria-current={active ? "page" : undefined} onClick={() => setOpen(false)}>{label}</Link>;
           })}
         </nav>
-        <a
+        {/* <a
           href="tel:112"
           className="darurat-pill ml-2 hidden items-center gap-1.5 rounded-full border border-red-200 bg-red-50/90 px-3 py-1.5 text-[12px] font-bold text-red-700 transition-colors hover:bg-red-100 md:inline-flex"
           title="Panggilan darurat bebas pulsa 112"
@@ -53,7 +53,7 @@ function Header({ pathname }: { pathname: string | null }) {
             <span className="relative inline-flex h-2 w-2 rounded-full bg-red-600" />
           </span>
           <span>Darurat 112</span>
-        </a>
+        </a> */}
         </>}
       </div>
     </header>
