@@ -5,15 +5,24 @@ import type {
   ReactNode,
 } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "tertiary";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "emergency"
+  | "route";
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-white hover:bg-brand-deep border border-transparent",
+    "bg-brand text-white hover:bg-brand-deep border border-transparent shadow-sm",
   secondary:
     "bg-surface text-trust border border-trust hover:bg-trust-wash",
   tertiary:
     "bg-transparent text-faint border border-transparent hover:bg-well focus-visible:underline",
+  emergency:
+    "bg-ok-fg text-white hover:opacity-95 border border-ok-fg font-bold shadow-sm",
+  route:
+    "bg-trust-wash text-trust border-2 border-trust hover:bg-blue-100 font-bold",
 };
 
 export function buttonClasses(variant: ButtonVariant = "primary"): string {

@@ -147,41 +147,108 @@ export function EmergencyBanner() {
   );
 }
 
-/** Penunjuk langkah wizard (ol berlabel; langkah aktif ber-aria-current). */
+/**
+ * Penunjuk langkah wizard (WCAG 2.2 AA compliant, min 48px touch targets,
+ * indikator tahapan nomor + ikon centang selesai, navigasi interaktif).
+ */
 export function WizardStepper({
   steps,
   current,
+  onStepClick,
+  maxReachable = current,
 }: {
   steps: readonly string[];
   /** Indeks 0-based; = steps.length bila semua langkah selesai. */
   current: number;
+  /** Callback navigasi langsung ke langkah (1-based: 1, 2, 3) */
+  onStepClick?: (step: 1 | 2 | 3) => void;
+  /** Indeks langkah terjauh yang valid diakses. */
+  maxReachable?: number;
 }) {
   return (
-    <ol aria-label="Langkah" className="grid grid-cols-3 gap-2">
-      {steps.map((label, i) => {
-        const done = i < current;
-        const active = i === current;
-        return (
-          <li
-            key={label}
-            aria-current={active ? "step" : undefined}
-            className={`flex flex-col gap-1 border-t-4 pt-2 text-[12px] leading-4 ${
-              active
-                ? "border-brand font-bold text-brand-deep"
-                : done
-                  ? "border-brand-deep text-ink"
-                  : "border-line text-faint"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1 font-semibold">
-              {done ? <CheckIcon /> : null}
-              Langkah {i + 1}
-              {done && <span className="sr-only">(selesai)</span>}
-            </span>
-            <span>{label}</span>
-          </li>
-        );
-      })}
-    </ol>
+    <nav aria-label="Tahapan formulir" className="w-full">
+      <ol className="grid grid-cols-3 gap-2 sm:gap-3">
+        {steps.map((label, i) => {
+          const stepNum = (i + 1) as 1 | 2 | 3;
+          const done = i < current;
+          const active = i === current;
+          const isReachable = Boolean(onStepClick && (done || i <= maxReachable));
+
+          const content = (
+            <div className="flex w-full items-center gap-2 sm:gap-3">
+              <span
+                aria-hidden="true"
+                className={`flex h-7 w-7 sm:h-8 sm:w-8 shrink-0 items-center justify-center rounded-full text-[12px] sm:text-[13px] font-bold transition-colors ${
+                  active
+                    ? "bg-brand text-white shadow-sm ring-4 ring-brand-tint"
+                    : done
+                      ? "bg-brand-deep text-white"
+                      : "border border-line bg-well text-faint"
+                }`}
+              >
+                {done ? <CheckIcon className="h-4 w-4" /> : stepNum}
+              </span>
+              <div className="flex min-w-0 flex-col text-left">
+                <span
+                  className={`text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider ${
+                    active
+                      ? "text-brand-deep"
+                      : done
+                        ? "text-muted"
+                        : "text-faint"
+                  }`}
+                >
+                  Langkah {stepNum}
+                </span>
+                <span
+                  className={`truncate text-[12px] sm:text-[14px] ${
+                    active
+                      ? "font-bold text-ink"
+                      : done
+                        ? "font-semibold text-ink"
+                        : "text-muted"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+            </div>
+          );
+
+          return (
+            <li
+              key={label}
+              aria-current={active ? "step" : undefined}
+              className="flex"
+            >
+              {isReachable && !active ? (
+                <button
+                  type="button"
+                  onClick={() => onStepClick?.(stepNum)}
+                  className={`flex min-h-12 w-full items-center rounded-lg border p-2 sm:px-3 sm:py-2.5 text-left transition-all hover:border-brand hover:bg-well focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2 ${
+                    done
+                      ? "border-line-strong bg-surface"
+                      : "border-line bg-canvas"
+                  }`}
+                  aria-label={`Langkah ${stepNum}: ${label} (${done ? "selesai, klik untuk ubah" : "buka"})`}
+                >
+                  {content}
+                </button>
+              ) : (
+                <div
+                  className={`flex min-h-12 w-full items-center rounded-lg border p-2 sm:px-3 sm:py-2.5 ${
+                    active
+                      ? "border-brand bg-brand-tint/60 shadow-sm"
+                      : "border-line bg-surface/70"
+                  }`}
+                >
+                  {content}
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ol>
+    </nav>
   );
 }

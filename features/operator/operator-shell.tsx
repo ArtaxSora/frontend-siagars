@@ -38,6 +38,8 @@ export function useOperator(): OperatorContextValue {
 const NAV = [
   { href: "/operator/rujukan", label: "Rujukan" },
   { href: "/operator/layanan", label: "Layanan & tempat tidur" },
+  { href: "/operator/riwayat-bpjs", label: "Riwayat BPJS" },
+  { href: "/operator/laporan-warga", label: "Laporan warga" },
 ] as const;
 
 /**
