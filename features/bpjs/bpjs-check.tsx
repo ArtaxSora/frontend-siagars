@@ -228,7 +228,7 @@ function BpjsResult({ result }: { result: BpjsCheckResult }) {
   return (
     <section
       aria-label="Hasil cek BPJS simulasi"
-      className="flex flex-col gap-4 rounded-md border-[1.5px] border-dashed border-sim-line bg-surface p-4 md:p-6"
+      className="flex flex-col gap-4 rounded-md border border-sim-line bg-surface p-4 md:p-6"
     >
       <p className="inline-flex items-start gap-2 rounded-md bg-sim-bg px-3 py-2 text-[12px] font-semibold leading-[18px] text-sim-fg">
         <FlaskIcon className="mt-0.5 shrink-0" />

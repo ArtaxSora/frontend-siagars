@@ -22,10 +22,12 @@ export function BedTile({
   label,
   available,
   total,
+  quiet = false,
 }: {
   label: string;
   available: number | null;
   total: number | null;
+  quiet?: boolean;
 }) {
   const d = describeBeds(available, total);
   return (
@@ -36,7 +38,7 @@ export function BedTile({
       <span
         className={`inline-flex items-center gap-1 text-[16px] font-bold leading-6 tabular-nums ${TONE_TEXT[d.tone]}`}
       >
-        {TONE_ICON[d.tone]}
+        {!quiet && TONE_ICON[d.tone]}
         {d.headline}
       </span>
       {d.detail && (

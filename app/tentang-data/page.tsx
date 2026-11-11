@@ -142,11 +142,7 @@ export default function AboutDataPage() {
           Metodologi skor rekomendasi (bahasa awam)
         </h2>
         <p className="text-muted">
-          Di halaman{" "}
-          <Link href="/pilih-rs" className="font-semibold text-trust underline">
-            Pilih RS
-          </Link>
-          , setiap rumah sakit diberi skor <strong>0 sampai 100</strong>. Skor
+          Pada hasil rekomendasi asisten, setiap rumah sakit diberi skor <strong>0 sampai 100</strong>. Skor
           ini mengukur{" "}
           <strong>
             seberapa cocok fasilitas RS dengan kebutuhan yang Anda pilih dan

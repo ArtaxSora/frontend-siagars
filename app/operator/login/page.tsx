@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function OperatorLoginPage() {
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-4">
       <h1 className="text-[28px] font-bold leading-9">Masuk operator</h1>
       <p className="max-w-prose text-muted">
         Khusus operator demo. Anda hanya dapat mengelola rumah sakit yang

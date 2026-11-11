@@ -12,18 +12,18 @@ export function SimulatedTag({ origin }: { origin: DataOrigin | null }) {
  * Badge ICU/NICU/PICU/Rawat inap dari facility_summary. `unknown` tampil
  * abu-abu "Belum diketahui" — bukan "tidak tersedia".
  */
-export function FacilityBadges({ summary }: { summary: FacilitySummary }) {
+export function FacilityBadges({ summary, quiet = false }: { summary: FacilitySummary; quiet?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5">
       <ul className="flex flex-wrap gap-x-4 gap-y-1.5" aria-label="Ringkasan fasilitas">
         {FACILITY_KEYS.map((key) => (
           <li key={key} className="flex items-center gap-1.5">
             <span className="text-ink">{FACILITY_LABEL[key]}</span>
-            <StatusBadge status={summary[key]} />
+            <StatusBadge status={summary[key]} quiet={quiet} />
           </li>
         ))}
       </ul>
-      {summary.data_origin === "simulation" && (
+      {!quiet && summary.data_origin === "simulation" && (
         <p className="flex flex-wrap items-center gap-2 text-[12px] leading-[18px] text-sim-fg">
           <SimulatedTag origin={summary.data_origin} />
           Angka contoh untuk demo, bukan fakta rumah sakit ini.
@@ -38,22 +38,24 @@ export function BpjsStatus({
   accepted,
   origin,
   long = false,
+  quiet = false,
 }: {
   accepted: boolean | null;
   /** bpjs_data_origin; "simulation" diberi label. */
   origin: DataOrigin | null;
   /** Kalimat panjang untuk halaman detail. */
   long?: boolean;
+  quiet?: boolean;
 }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-2">
-      <BpjsValue
+      {quiet ? <span className={accepted === true ? "text-ok-fg" : accepted === false ? "text-bad-fg" : "text-unk-fg"}>BPJS: {accepted === true ? "diterima" : accepted === false ? "tidak diterima" : "belum diketahui"}{origin === "simulation" ? " (data contoh)" : ""}</span> : <BpjsValue
         accepted={accepted}
         long={long}
         // Data contoh tidak punya sumber: jangan tulis "menurut sumber".
         basis={origin === "simulation" ? "(data contoh)" : "menurut sumber"}
-      />
-      <SimulatedTag origin={origin} />
+      />}
+      {!quiet && <SimulatedTag origin={origin} />}
     </span>
   );
 }

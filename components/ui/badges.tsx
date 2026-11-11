@@ -39,7 +39,8 @@ const STATUS_ICON: Record<ServiceStatus, ReactNode> = {
 };
 
 /** Status layanan: ikon + teks + warna (warna bukan satu-satunya penanda). */
-export function StatusBadge({ status }: { status: ServiceStatus }) {
+export function StatusBadge({ status, quiet = false }: { status: ServiceStatus; quiet?: boolean }) {
+  if (quiet) return <span className={`text-[12px] font-medium ${status === "available" ? "text-ok-fg" : status === "unavailable" ? "text-bad-fg" : status === "limited" ? "text-warn-fg" : "text-unk-fg"}`}>{SERVICE_STATUS_LABEL[status]}</span>;
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-bold leading-[14px] tracking-[0.04em] ${STATUS_STYLE[status]}`}
@@ -52,7 +53,7 @@ export function StatusBadge({ status }: { status: ServiceStatus }) {
 
 const ORIGIN_STYLE: Record<DataOrigin, string> = {
   curated: "bg-kurasi-bg text-kurasi-fg border border-kurasi-line",
-  simulation: "bg-sim-bg text-sim-fg border-[1.5px] border-dashed border-sim-line",
+  simulation: "bg-sim-bg text-sim-fg border border-sim-line",
   satusehat_sandbox: "bg-sandbox-bg text-sandbox-fg border border-sandbox-line",
   satusehat_production: "bg-kurasi-bg text-kurasi-fg border border-kurasi-line",
 };
@@ -64,7 +65,7 @@ const ORIGIN_ICON: Record<DataOrigin, ReactNode> = {
   satusehat_production: <PlugIcon />,
 };
 
-/** Label asal data. Label simulasi selalu terlihat (garis putus-putus). */
+/** Label asal data, termasuk penanda simulasi yang tetap terbaca. */
 export function OriginBadge({ origin }: { origin: DataOrigin }) {
   return (
     <span

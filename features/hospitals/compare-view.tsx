@@ -291,7 +291,6 @@ export function CompareView() {
           description="Centang “Bandingkan” pada 2 sampai 3 rumah sakit di hasil rekomendasi atau pencarian. SiagaRS lalu menandai siapa yang unggul di setiap atribut."
           action={
             <div className="flex flex-wrap gap-2">
-              <ButtonLink href="/pilih-rs">Bantu saya pilih RS</ButtonLink>
               <ButtonLink href="/rumah-sakit" variant="secondary">
                 Cari rumah sakit
               </ButtonLink>

@@ -7,7 +7,7 @@ import {
   isScenarioMatched,
   type UrgentScenario,
 } from "@/lib/recommendations/scenarios";
-import { AlertIcon, CheckIcon, SparklesIcon } from "@/components/ui/icons";
+import { AlertIcon, CheckIcon } from "@/components/ui/icons";
 
 export { URGENT_SCENARIOS, isScenarioMatched, type UrgentScenario };
 
@@ -15,10 +15,12 @@ export function QuickScenarios({
   state,
   onSelect,
   onReset,
+  searchMode = false,
 }: {
   state: WizardState;
   onSelect: (scenario: UrgentScenario) => void;
   onReset?: () => void;
+  searchMode?: boolean;
 }) {
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const activeScenario = URGENT_SCENARIOS.find((s) =>
@@ -27,33 +29,25 @@ export function QuickScenarios({
 
   const handleSelect = (scenario: UrgentScenario) => {
     setAnnouncement(
-      `Skenario ${scenario.title} diterapkan. Langkah 1 dan 3 telah terisi otomatis. Silakan tentukan lokasi pasien.`,
+      searchMode ? `Pilihan ${scenario.title} diterapkan ke filter pencarian.` : `Skenario ${scenario.title} diterapkan. Langkah 1 dan 3 telah terisi otomatis. Silakan tentukan lokasi pasien.`,
     );
     onSelect(scenario);
   };
 
   return (
-    <section
-      aria-labelledby="quick-scenarios-heading"
-      className="flex flex-col gap-3 rounded-md border border-brand/30 bg-brand-tint/30 p-4 md:p-5"
+    <details
+      className="rounded-lg border border-line bg-surface px-5"
     >
+      <summary className="min-h-14 cursor-pointer py-4 font-semibold text-brand-deep">{activeScenario ? `Pilihan cepat: ${activeScenario.title}` : "Gunakan pilihan layanan siap pakai"}</summary>
+      <div className="flex flex-col gap-4 pb-5">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <span
-            aria-hidden="true"
-            className="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-white"
-          >
-            <SparklesIcon className="h-4 w-4" />
-          </span>
           <h2
             id="quick-scenarios-heading"
             className="text-[16px] font-bold text-ink sm:text-[18px]"
           >
-            Skenario Cepat (1-Klik)
+            Pilih kebutuhan Anda
           </h2>
-          <span className="rounded bg-brand/10 px-2 py-0.5 text-[11px] font-bold text-brand-deep">
-            Darurat / Stres Tinggi
-          </span>
         </div>
         {activeScenario && onReset && (
           <button
@@ -67,9 +61,7 @@ export function QuickScenarios({
       </div>
 
       <p className="text-[13px] leading-5 text-muted">
-        Dalam kondisi mendesak, lewati langkah pemilihan layanan dan preferensi
-        dengan sekali tekan. Anda hanya perlu menentukan lokasi pasien di
-        Langkah 2:
+        {searchMode ? "Pilih layanan untuk langsung menyaring hasil. Atur wilayah melalui Filter & urutan atau kolom pencarian di atas." : "Layanan dan preferensi BPJS akan terisi otomatis. Setelah itu, tentukan lokasi pasien."}
       </p>
 
       {/* Accessible live region for screen readers */}
@@ -88,6 +80,7 @@ export function QuickScenarios({
             <button
               key={sc.id}
               type="button"
+              aria-pressed={isActive}
               onClick={() => handleSelect(sc)}
               className={`flex min-h-[52px] flex-col justify-between rounded-lg border p-3 text-left transition-all focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand focus-visible:outline-offset-2 ${
                 isActive
@@ -135,11 +128,11 @@ export function QuickScenarios({
           <AlertIcon className="h-4 w-4 shrink-0" />
           <span>
             Skenario <strong>{activeScenario.title}</strong> aktif. Layanan dan
-            preferensi sudah terisi otomatis. Lanjutkan dengan memilih lokasi di
-            bawah.
+            preferensi sudah terisi otomatis. {searchMode ? "Hasil pencarian di bawah mengikuti pilihan ini." : "Lanjutkan dengan memilih lokasi di bawah."}
           </span>
         </div>
       )}
-    </section>
+      </div>
+    </details>
   );
 }

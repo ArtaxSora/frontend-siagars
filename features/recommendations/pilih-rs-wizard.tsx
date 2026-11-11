@@ -158,11 +158,11 @@ export function PilihRsWizard() {
   return (
     <div className="flex flex-col gap-5">
       {/* Skenario Cepat (1-Klik) untuk situasi stres/darurat tinggi */}
-      <QuickScenarios
+      {state.step !== "hasil" && <QuickScenarios
         state={state}
         onSelect={handleSelectScenario}
         onReset={handleResetScenario}
-      />
+      />}
 
       <WizardStepper
         steps={STEP_LABELS}
@@ -382,7 +382,7 @@ export function PilihRsWizard() {
               </label>
             ))}
           </fieldset>
-          <label className="flex min-h-11 cursor-pointer items-start gap-2 rounded-md border-[1.5px] border-dashed border-sim-line bg-sim-bg p-3">
+          <label className="flex min-h-11 cursor-pointer items-start gap-2 rounded-md border border-sim-line bg-sim-bg p-3">
             <input
               type="checkbox"
               className="mt-1 h-4 w-4 accent-[var(--color-brand)]"
