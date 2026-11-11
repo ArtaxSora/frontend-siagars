@@ -5,19 +5,28 @@ import type {
   ReactNode,
 } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "tertiary";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "tertiary"
+  | "emergency"
+  | "route";
 
 const VARIANT: Record<ButtonVariant, string> = {
   primary:
-    "bg-brand text-white hover:bg-brand-deep border border-transparent",
+    "bg-brand text-white hover:bg-brand-deep border border-transparent shadow-sm",
   secondary:
     "bg-surface text-trust border border-trust hover:bg-trust-wash",
   tertiary:
     "bg-transparent text-faint border border-transparent hover:bg-well focus-visible:underline",
+  emergency:
+    "bg-ok-fg text-white hover:opacity-95 border border-ok-fg font-bold shadow-sm",
+  route:
+    "bg-trust-wash text-trust border-2 border-trust hover:bg-blue-100 font-bold",
 };
 
 export function buttonClasses(variant: ButtonVariant = "primary"): string {
-  return `inline-flex min-h-10 items-center justify-center gap-2 rounded-md px-4 text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT[variant]}`;
+  return `inline-flex min-h-11 items-center justify-center md:min-h-10 gap-2 rounded-md px-4 text-[14px] font-semibold leading-5 transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${VARIANT[variant]}`;
 }
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {

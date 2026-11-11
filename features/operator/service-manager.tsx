@@ -2,7 +2,12 @@
 
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, toApiError } from "@/lib/api/client";
-import { getHospital, patchHospitalBeds, patchHospitalService } from "@/lib/api/endpoints";
+import {
+  getAdminHospital,
+  listAdminHospitals,
+  patchHospitalBeds,
+  patchHospitalService,
+} from "@/lib/api/endpoints";
 import { SERVICE_STATUS_LABEL, bedCategoryLabel } from "@/lib/contracts/labels";
 import {
   SERVICE_STATUSES,
@@ -17,7 +22,6 @@ import { mutationMessage } from "@/features/operator/mutation-errors";
 import { Button } from "@/components/ui/button";
 import { Field, inputClasses } from "@/components/ui/field";
 import { SimulationNotice } from "@/components/ui/notices";
-import { useHospitalNames } from "@/features/operator/use-hospital-names";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
 interface RowCallbacks {
@@ -234,8 +238,9 @@ function BedRow({
 
 function HospitalEditor({ hospitalId }: { hospitalId: string }) {
   const { handleAuthError } = useOperator();
-  const res = useApiResource(`hospital:${hospitalId}`, (signal) =>
-    getHospital(hospitalId, signal),
+  // Endpoint admin: data dalam scope operator + `version` terbaru untuk PATCH.
+  const res = useApiResource(`admin-hospital:${hospitalId}`, (signal) =>
+    getAdminHospital(hospitalId, signal),
   );
   const [notices, setNotices] = useState<Record<string, string>>({});
 
@@ -325,7 +330,17 @@ function HospitalEditor({ hospitalId }: { hospitalId: string }) {
 export function ServiceManager() {
   const { operator } = useOperator();
   const [hospitalId, setHospitalId] = useState(operator.hospital_ids[0] ?? "");
-  const names = useHospitalNames(operator.hospital_ids);
+  const { handleAuthError } = useOperator();
+  const scoped = useApiResource("admin-hospitals", (signal) =>
+    listAdminHospitals(signal),
+  );
+  useEffect(() => {
+    if (scoped.error) handleAuthError(scoped.error);
+  }, [scoped.error, handleAuthError]);
+  // Sebelum daftar admin termuat, ID dari sesi tetap bisa dipilih.
+  const options =
+    scoped.data?.data.map((h) => ({ id: h.id, name: h.name })) ??
+    operator.hospital_ids.map((id) => ({ id, name: id }));
 
   if (operator.hospital_ids.length === 0) {
     return (
@@ -347,9 +362,9 @@ export function ServiceManager() {
             value={hospitalId}
             onChange={(e) => setHospitalId(e.target.value)}
           >
-            {operator.hospital_ids.map((id) => (
-              <option key={id} value={id}>
-                {names[id] ?? id}
+            {options.map((h) => (
+              <option key={h.id} value={h.id}>
+                {h.name}
               </option>
             ))}
           </select>

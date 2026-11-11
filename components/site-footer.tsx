@@ -17,6 +17,14 @@ export function SiteFooter() {
           </Link>
           .
         </p>
+        <p>
+          <Link
+            href="/status"
+            className="inline-flex min-h-11 items-center font-semibold text-trust underline md:min-h-0"
+          >
+            Status sistem
+          </Link>
+        </p>
       </div>
     </footer>
   );

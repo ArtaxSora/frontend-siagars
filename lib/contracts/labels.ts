@@ -4,9 +4,19 @@
  */
 import type {
   BedCategory,
+  BpjsCheckResultKind,
+  BpjsParticipantStatus,
+  Coded,
   DataOrigin,
+  DataQualityLabel,
+  ExclusionReason,
+  FacilitySummary,
   Freshness,
+  MarkerMatch,
   ReferralStatus,
+  ReportCategory,
+  ReportStatus,
+  ScoreLevel,
   ServiceStatus,
   TrackingHistory,
 } from "./types.ts";
@@ -28,7 +38,7 @@ export const ORIGIN_LABEL: Record<DataOrigin, string> = {
 export const ORIGIN_DESCRIPTION: Record<DataOrigin, string> = {
   curated: "Dikurasi tim dari sumber lapangan atau dokumen publik.",
   simulation:
-    "Data simulasi dengan rumah sakit fiktif untuk demo; bukan fakta layanan rumah sakit nyata.",
+    "Data simulasi untuk demo: rumah sakit fiktif, atau angka contoh pada rumah sakit nyata. Bukan fakta layanan rumah sakit.",
   satusehat_sandbox:
     "Data dari lingkungan sandbox SATUSEHAT; bukan data produksi dan bisa tidak lengkap.",
   satusehat_production: "Data dari SATUSEHAT produksi (hanya bila berizin).",
@@ -76,3 +86,90 @@ export const BED_CATEGORY_LABEL: Record<BedCategory, string> = {
 export function bedCategoryLabel(category: string): string {
   return (BED_CATEGORY_LABEL as Record<string, string>)[category] ?? category;
 }
+
+/** Status fasilitas pada facility_summary (urut tampil tetap). */
+export const FACILITY_KEYS = ["icu", "nicu", "picu", "rawat_inap"] as const satisfies
+  readonly (keyof FacilitySummary)[];
+export type FacilityKey = (typeof FACILITY_KEYS)[number];
+
+export const FACILITY_LABEL: Record<FacilityKey, string> = {
+  icu: "ICU",
+  nicu: "NICU",
+  picu: "PICU",
+  rawat_inap: "Rawat inap",
+};
+
+/** Slug layanan yang sudah terwakili facility_summary (hindari tampil ganda). */
+export const FACILITY_SERVICE_SLUGS: ReadonlySet<string> = new Set([
+  "icu",
+  "nicu",
+  "picu",
+  "rawat-inap",
+]);
+
+/** Kelas/subtipe RS: name bisa null sampai sumber disinkron ulang -> pakai code. */
+export function codedLabel(value: Coded | null): string | null {
+  if (!value) return null;
+  return value.name ?? value.code;
+}
+
+/** null = belum diketahui, bukan "tidak beroperasi". */
+export function operationalLabel(value: boolean | null): string {
+  if (value === true) return "Beroperasi menurut sumber";
+  if (value === false) return "Tidak beroperasi menurut sumber";
+  return "Belum diketahui";
+}
+
+export const BPJS_PARTICIPANT_STATUS_LABEL: Record<BpjsParticipantStatus, string> = {
+  active: "Aktif",
+  inactive: "Tidak aktif",
+};
+
+export const BPJS_CHECK_RESULT_LABEL: Record<BpjsCheckResultKind, string> = {
+  found: "Ditemukan",
+  not_found: "Tidak ditemukan",
+};
+
+/* ---------------- Keputusan (API 0.4.0) ---------------- */
+
+/** Level skor kecocokan: high=ok, medium=warn, low=bad (PRD §6). */
+export const SCORE_LEVEL_LABEL: Record<ScoreLevel, string> = {
+  high: "Kecocokan tinggi",
+  medium: "Kecocokan sedang",
+  low: "Kecocokan rendah",
+};
+
+export const DATA_QUALITY_LABEL: Record<DataQualityLabel, string> = {
+  baik: "Data baik",
+  cukup: "Data cukup",
+  terbatas: "Data terbatas",
+};
+
+export const MARKER_MATCH_LABEL: Record<MarkerMatch, string> = {
+  all: "Semua layanan yang dipilih tercatat tersedia",
+  partial: "Sebagian layanan yang dipilih tercatat tersedia",
+  none: "Layanan yang dipilih tidak tercatat tersedia",
+};
+
+/** Bagian kalimat "N RS tidak ditampilkan karena …". `{services}` = nama layanan. */
+export const EXCLUSION_REASON_LABEL: Record<ExclusionReason, string> = {
+  service_unavailable: "{services} tercatat tidak tersedia",
+  bpjs_false: "tercatat tidak menerima BPJS",
+  out_of_radius: "berada di luar radius",
+  location_unknown: "koordinatnya belum diketahui",
+  not_operational: "tercatat tidak beroperasi",
+};
+
+export const REPORT_CATEGORY_LABEL: Record<ReportCategory, string> = {
+  services: "Ketersediaan Layanan Kritis",
+  beds: "Ketersediaan Tempat Tidur",
+  bpjs: "Status Penerimaan BPJS",
+  phone: "Kontak / Nomor Telepon RS",
+  other: "Lainnya / Profil Fasilitas",
+};
+
+export const REPORT_STATUS_LABEL: Record<ReportStatus, string> = {
+  pending_review: "Menunggu Verifikasi",
+  verified: "Terverifikasi Operator",
+  rejected: "Ditolak / Tidak Valid",
+};

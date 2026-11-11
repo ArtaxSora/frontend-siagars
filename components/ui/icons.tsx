@@ -101,3 +101,56 @@ export const ClockIcon = (p: IconProps) => (
     <path d="M10 6v4.5l3 1.5" />
   </Base>
 );
+
+export const MenuIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 5.5h14M3 10h14M3 14.5h14" />
+  </Base>
+);
+
+export const FilterIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 5h14M6 10h8M8.5 15h3" />
+  </Base>
+);
+
+export const StarIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m10 2.8 2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L2.8 8.1l5-.7L10 2.8Z" />
+  </Base>
+);
+
+export const GaugeIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M3 14a7 7 0 1 1 14 0" />
+    <path d="m10 14 3-4" />
+  </Base>
+);
+
+export const ChevronDownIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m5 7.5 5 5 5-5" />
+  </Base>
+);
+
+export const ShareIcon = (p: IconProps) => (
+  <Base {...p}>
+    <circle cx="15" cy="4.5" r="2" />
+    <circle cx="5" cy="10" r="2" />
+    <circle cx="15" cy="15.5" r="2" />
+    <path d="m6.8 9 6.4-3.5M6.8 11l6.4 3.5" />
+  </Base>
+);
+
+export const SparklesIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="m10 2 1.8 4.2L16 8l-4.2 1.8L10 14l-1.8-4.2L4 8l4.2-1.8L10 2Z" />
+    <path d="M15 13l.9 2.1L18 16l-2.1.9L15 19l-.9-2.1L12 16l2.1-.9L15 13Z" />
+  </Base>
+);
+
+export const FlagIcon = (p: IconProps) => (
+  <Base {...p}>
+    <path d="M4 18v-3m0 0V4c3-1.5 5 1.5 8 0v8c-3 1.5-5-1.5-8 0Z" />
+  </Base>
+);

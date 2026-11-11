@@ -5,19 +5,27 @@ import Link from "next/link";
 import { getHospital } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
 import { formatDistanceKm } from "@/lib/format/beds";
-import { bedCategoryLabel } from "@/lib/contracts/labels";
-import { directionsHref, telHref } from "@/lib/hospitals/summary";
+import {
+  bedCategoryLabel,
+  codedLabel,
+  operationalLabel,
+} from "@/lib/contracts/labels";
+import { formatWib } from "@/lib/format/time";
+import {
+  directionsHref,
+  hasSimulatedData,
+  safeSourceUrl,
+  telHref,
+} from "@/lib/hospitals/summary";
+import { describeHospitalMetadata } from "@/lib/insights/aggregate";
 import { BedTile } from "@/features/hospitals/bed-tile";
+import { BpjsStatus, FacilityBadges } from "@/features/hospitals/facility-badges";
 import { SourceLine, StatusBadge } from "@/components/ui/badges";
 import { ButtonLink } from "@/components/ui/button";
-import {
-  CheckIcon,
-  CrossIcon,
-  PhoneIcon,
-  QuestionIcon,
-  RouteIcon,
-} from "@/components/ui/icons";
+import { DataQualityBadge } from "@/components/ui/decision";
+import { FlagIcon, PhoneIcon, QuestionIcon, RouteIcon } from "@/components/ui/icons";
 import { CapacityDisclaimer, SimulationNotice } from "@/components/ui/notices";
+import { ShareButton } from "@/components/ui/share-button";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
 function Section({
@@ -46,7 +54,7 @@ export function HospitalDetail({ id }: { id: string }) {
   const backLink = (
     <Link
       href="/rumah-sakit"
-      className="inline-flex min-h-10 items-center text-[14px] font-semibold text-trust hover:underline"
+      className="inline-flex min-h-11 items-center text-[14px] font-semibold text-trust hover:underline md:min-h-10"
     >
       ← Kembali ke pencarian
     </Link>
@@ -88,12 +96,21 @@ export function HospitalDetail({ id }: { id: string }) {
   const tel = telHref(hospital.phone);
   const route = directionsHref(hospital);
   const distance = formatDistanceKm(hospital.distance_km);
-  const bpjs = hospital.bpjs;
+  const summary = hospital.facility_summary;
+  const bpjsSource = safeSourceUrl(hospital.bpjs_source_url);
+  const bpjsUpdated = formatWib(hospital.bpjs_source_updated_at);
+  const shareMeta = describeHospitalMetadata(hospital);
+  const profile: Array<[string, string]> = [
+    ["Kelas", codedLabel(hospital.facility_class) ?? "Belum diketahui"],
+    ["Jenis", codedLabel(hospital.facility_subtype) ?? "Belum diketahui"],
+    ["Status operasional", operationalLabel(hospital.operational)],
+  ];
+  if (hospital.external_id) profile.push(["Kode SATUSEHAT", hospital.external_id]);
 
   return (
     <div className="flex flex-col gap-4">
       {backLink}
-      {hospital.data_origin === "simulation" && <SimulationNotice />}
+      {hasSimulatedData(hospital) && <SimulationNotice />}
 
       <header className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 md:p-6">
         <div className="flex flex-col gap-1">
@@ -107,54 +124,111 @@ export function HospitalDetail({ id }: { id: string }) {
             {hospital.address ?? "Alamat belum diketahui"}
           </p>
           {distance && <p className="tabular-nums text-muted">{distance}</p>}
+          <div className="mt-1">
+            <DataQualityBadge quality={hospital.data_quality} />
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        {/* Action buttons: prominent high contrast Telepon & Rute with min 44px touch targets on mobile */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
           {tel ? (
-            <ButtonLink href={tel} native>
+            <ButtonLink
+              href={tel}
+              variant="emergency"
+              native
+              className="flex-1 sm:flex-initial text-[14px]"
+            >
               <PhoneIcon /> Telepon {hospital.phone}
             </ButtonLink>
           ) : (
-            <p className="inline-flex items-center gap-1 text-unk-fg">
+            <p className="inline-flex min-h-11 items-center gap-1 text-unk-fg">
               <QuestionIcon /> Nomor telepon belum diketahui
             </p>
           )}
           {route ? (
-            <ButtonLink href={route} variant="secondary" external>
+            <ButtonLink
+              href={route}
+              variant="route"
+              external
+              className="flex-1 sm:flex-initial text-[14px]"
+            >
               <RouteIcon /> Buka rute (peta eksternal)
             </ButtonLink>
           ) : (
-            <p className="inline-flex items-center gap-1 text-unk-fg">
+            <p className="inline-flex min-h-11 items-center gap-1 text-unk-fg">
               <QuestionIcon /> Koordinat belum diketahui — rute tidak tersedia
             </p>
           )}
+          <ButtonLink
+            href={`/lapor-data?hospital_id=${encodeURIComponent(hospital.id)}`}
+            variant="secondary"
+            className="flex-1 sm:flex-initial"
+          >
+            <FlagIcon /> Laporkan koreksi data
+          </ButtonLink>
+          <ShareButton
+            title={`${shareMeta.title} · SiagaRS`}
+            text={shareMeta.description}
+            url={`/rumah-sakit/${encodeURIComponent(hospital.id)}`}
+          />
         </div>
         <CapacityDisclaimer />
       </header>
 
+      <Section title="Profil fasilitas">
+        <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-[max-content_1fr]">
+          {profile.map(([label, value]) => (
+            <div key={label} className="contents">
+              <dt className="text-muted">{label}</dt>
+              <dd className={value === "Belum diketahui" ? "text-unk-fg" : "font-semibold"}>
+                {value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <SourceLine source={hospital} />
+      </Section>
+
+      <Section title="Ringkasan fasilitas">
+        <FacilityBadges summary={summary} />
+        <BedTile
+          label="Tempat tidur rawat inap"
+          available={summary.inpatient_beds.available}
+          total={summary.inpatient_beds.total}
+        />
+        <p className="text-[12px] leading-[18px] text-muted">
+          Ringkasan dari data yang ada; status &ldquo;Belum diketahui&rdquo;
+          berarti sumber belum menyediakan datanya, bukan tidak tersedia.
+        </p>
+      </Section>
+
       <Section title="BPJS">
         <p className="text-[16px] font-semibold">
-          {bpjs === true && (
-            <span className="inline-flex items-center gap-1 text-ok-fg">
-              <CheckIcon /> Menerima BPJS menurut sumber
-            </span>
-          )}
-          {bpjs === false && (
-            <span className="inline-flex items-center gap-1 text-bad-fg">
-              <CrossIcon /> Tidak menerima BPJS menurut sumber
-            </span>
-          )}
-          {bpjs === null && (
-            <span className="inline-flex items-center gap-1 text-unk-fg">
-              <QuestionIcon /> Belum diketahui
-            </span>
-          )}
+          <BpjsStatus accepted={summary.bpjs} origin={hospital.bpjs_data_origin} long />
         </p>
+        {(bpjsSource || bpjsUpdated) && (
+          <p className="text-[12px] leading-[18px] text-muted">
+            Sumber BPJS
+            {bpjsUpdated && <> diperbarui {bpjsUpdated}</>}
+            {bpjsSource && (
+              <>
+                {" — "}
+                <a
+                  href={bpjsSource}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-trust underline"
+                >
+                  lihat sumber
+                </a>
+              </>
+            )}
+          </p>
+        )}
         <p className="text-[12px] leading-[18px] text-muted">
           Informasi ini bukan jaminan kelayakan pasien; konfirmasikan ke rumah
           sakit dan BPJS.
         </p>
-        <SourceLine source={hospital} />
       </Section>
 
       <Section title="Tempat tidur">
@@ -197,6 +271,30 @@ export function HospitalDetail({ id }: { id: string }) {
           ))}
         </ul>
       </Section>
+
+      {/* Callout Koreksi Data Lapangan */}
+      <section
+        aria-labelledby="koreksi-rs-title"
+        className="flex flex-col gap-2.5 rounded-md border border-dashed border-line bg-surface p-4 md:p-5"
+      >
+        <div className="flex items-center gap-2 font-semibold text-ink">
+          <FlagIcon className="text-brand" />
+          <h2 id="koreksi-rs-title" className="text-[16px]">
+            Melihat perbedaan ketersediaan atau kontak di lapangan?
+          </h2>
+        </div>
+        <p className="text-[14px] leading-5 text-muted">
+          Data ketersediaan ranap/IGD rumah sakit bisa berubah setiap menit. Laporkan pembaruan
+          terkini untuk diverifikasi tim operator demi menjaga data tetap segar dan akurat bagi pasien lain.
+        </p>
+        <ButtonLink
+          href={`/lapor-data?hospital_id=${encodeURIComponent(hospital.id)}`}
+          variant="secondary"
+          className="self-start mt-1"
+        >
+          Laporkan koreksi data untuk {hospital.name}
+        </ButtonLink>
+      </section>
     </div>
   );
 }

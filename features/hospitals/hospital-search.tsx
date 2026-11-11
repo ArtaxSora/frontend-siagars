@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { listHospitals, listServices } from "@/lib/api/endpoints";
+import { listHospitals, listRegions, listServices } from "@/lib/api/endpoints";
 import { useApiResource } from "@/lib/hooks/use-api-resource";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import {
@@ -13,14 +13,15 @@ import {
   serializeHospitalQuery,
   type HospitalQuery,
 } from "@/lib/hospitals/query";
-import { isMappable } from "@/lib/hospitals/summary";
+import { hasSimulatedData, isMappable } from "@/lib/hospitals/summary";
 import type { Hospital } from "@/lib/contracts/types";
 import Link from "next/link";
 import { HospitalCard } from "@/features/hospitals/hospital-card";
 import { HospitalFilters } from "@/features/hospitals/hospital-filters";
+import { HospitalSuggestInput } from "@/features/hospitals/hospital-suggest";
 import { HospitalMap } from "@/features/hospitals/map/hospital-map";
 import { Button } from "@/components/ui/button";
-import { Field, inputClasses } from "@/components/ui/field";
+import { Field } from "@/components/ui/field";
 import { SearchIcon } from "@/components/ui/icons";
 import { SimulationNotice } from "@/components/ui/notices";
 import { Pagination } from "@/components/ui/pagination";
@@ -41,6 +42,7 @@ export function HospitalSearch() {
     listHospitals(query, signal),
   );
   const services = useApiResource("services", (signal) => listServices(signal));
+  const regions = useApiResource("regions", (signal) => listRegions(signal));
 
   const queryRef = useRef(query);
   useEffect(() => {
@@ -179,16 +181,6 @@ export function HospitalSearch() {
       }),
     );
   }
-  const regionMatch = items.find(
-    (h) =>
-      (query.city_code !== "" && h.city_code === query.city_code) ||
-      (query.city_code === "" && h.province_code === query.province_code),
-  );
-  const regionLabel = regionMatch
-    ? query.city_code !== ""
-      ? `${regionMatch.city_name}, ${regionMatch.province_name}`
-      : regionMatch.province_name
-    : null;
 
   /* ---- Render ---- */
   const firstLoad = hospitals.loading && hospitals.data === null;
@@ -206,17 +198,12 @@ export function HospitalSearch() {
             id="search-q"
             label="Cari nama rumah sakit, kota, atau provinsi"
           >
-            <input
+            <HospitalSuggestInput
               id="search-q"
-              type="search"
-              inputMode="search"
-              autoComplete="off"
-              enterKeyHint="search"
-              className={inputClasses}
               placeholder="Contoh: Surabaya, atau nama rumah sakit"
               value={text}
-              onChange={(e) => onTextChange(e.target.value)}
-              maxLength={100}
+              onChange={onTextChange}
+              dataset={query.dataset}
             />
           </Field>
         </div>
@@ -228,7 +215,7 @@ export function HospitalSearch() {
       <HospitalFilters
         query={query}
         services={services}
-        regionLabel={regionLabel}
+        regions={regions}
         onFilterChange={(patch) => navigate(applyFilterChange(query, patch))}
         onReset={() => {
           setText("");
@@ -246,7 +233,8 @@ export function HospitalSearch() {
         geoMessage={geoMessage}
       />
 
-      {query.dataset !== "real" && <SimulationNotice />}
+      {/* Dataset real pun bisa memuat data fasilitas contoh (API 0.2.1). */}
+      {(query.dataset !== "real" || items.some(hasSimulatedData)) && <SimulationNotice />}
 
       {compareIds.length > 0 && (
         <div
@@ -260,7 +248,7 @@ export function HospitalSearch() {
           {compareIds.length >= 2 ? (
             <Link
               href={`/bandingkan?ids=${compareIds.join(",")}`}
-              className="inline-flex min-h-10 items-center rounded-md bg-brand px-4 font-semibold text-white"
+              className="inline-flex min-h-11 items-center rounded-md bg-brand px-4 font-semibold text-white md:min-h-10"
             >
               Bandingkan
             </Link>
@@ -400,6 +388,11 @@ export function HospitalSearch() {
                 onSelect={selectFromMarker}
                 userLocation={userLocation}
                 omittedCount={items.length - mappable.length}
+                area={{
+                  services: query.services,
+                  bpjs: query.bpjs,
+                  dataset: query.dataset,
+                }}
               />
             )}
             {!isDesktop && selectedHospital && (

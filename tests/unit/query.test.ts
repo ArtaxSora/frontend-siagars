@@ -127,10 +127,10 @@ describe("kontrak API nyata", () => {
     assert.equal(parse("q=%24where").q, "where");
   });
 
-  test("dataset default simulation; nilai tak dikenal kembali ke default", () => {
-    assert.equal(parse("").dataset, "simulation");
-    assert.equal(parse("dataset=real").dataset, "real");
-    assert.equal(parse("dataset=hack").dataset, "simulation");
+  test("dataset default real; nilai tak dikenal kembali ke default", () => {
+    assert.equal(parse("").dataset, "real");
+    assert.equal(parse("dataset=simulation").dataset, "simulation");
+    assert.equal(parse("dataset=hack").dataset, "real");
   });
 
   test("has_available_beds hanya true yang dihitung", () => {
@@ -140,7 +140,7 @@ describe("kontrak API nyata", () => {
 
   test("buildApiQueryString selalu eksplisit & tanpa param kosong", () => {
     const p = new URLSearchParams(buildApiQueryString(EMPTY_QUERY));
-    assert.equal(p.get("dataset"), "simulation");
+    assert.equal(p.get("dataset"), "real");
     assert.equal(p.get("page"), "1");
     assert.equal(p.get("limit"), "20");
     assert.equal(p.get("sort"), "name");

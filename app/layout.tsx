@@ -5,6 +5,7 @@ import "./globals.css";
 import { PrototypeBanner } from "@/components/ui/notices";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { FloatingAssistantButton } from "@/components/ui/floating-assistant-button";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -14,16 +15,21 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "SiagaRS — Cari rumah sakit berdasarkan fasilitas",
+    default: "SiagaRS — Putuskan rumah sakit yang tepat dengan data yang jujur",
     template: "%s · SiagaRS",
   },
   description:
-    "Prototipe untuk mencari rumah sakit berdasarkan fasilitas yang dinyatakan tersedia, lengkap dengan sumber dan umur informasinya. Bukan layanan resmi gawat darurat.",
+    "Asisten pemilihan rumah sakit berbasis data: rekomendasi ber-skor yang bisa dijelaskan, perbandingan, serta sumber dan umur setiap informasi. Bukan layanan gawat darurat — darurat: 112.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
+    // Ekstensi browser (mis. Night Eye) menambah atribut di <html> sebelum hidrasi.
+    <html
+      lang="id"
+      className={`${jakarta.variable} h-full antialiased`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-full flex-col">
         <a
           href="#main-content"
@@ -39,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         >
           {children}
         </main>
+        <FloatingAssistantButton />
         <SiteFooter />
       </body>
     </html>

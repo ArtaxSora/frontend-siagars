@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      # Build tidak memanggil backend; API_BASE_URL hanya dipakai rewrite saat runtime.
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"

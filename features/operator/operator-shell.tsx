@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -38,6 +38,8 @@ export function useOperator(): OperatorContextValue {
 const NAV = [
   { href: "/operator/rujukan", label: "Rujukan" },
   { href: "/operator/layanan", label: "Layanan & tempat tidur" },
+  { href: "/operator/riwayat-bpjs", label: "Riwayat BPJS" },
+  { href: "/operator/laporan-warga", label: "Laporan warga" },
 ] as const;
 
 /**
@@ -45,19 +47,18 @@ const NAV = [
  * dilakukan API; jangan mengandalkan komponen ini untuk keamanan.
  */
 export function OperatorShell({ children }: { children: ReactNode }) {
-  const router = useRouter();
   const pathname = usePathname();
   const me = useApiResource("auth:me", (signal) => getMe(signal));
   const [loggingOut, setLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<ApiError | null>(null);
 
-  const redirectToLogin = useCallback(
-    (expired: boolean) => {
-      clearCsrfToken();
-      router.replace(expired ? "/operator/login?expired=1" : "/operator/login");
-    },
-    [router],
-  );
+  // Navigasi penuh (bukan router.replace): cacheComponents menyimpan state
+  // halaman yang pernah dibuka, sehingga tombol "Keluar…"/"Masuk…" dan data
+  // sesi lama bisa tertinggal. Muat ulang membersihkan semuanya.
+  const redirectToLogin = useCallback((expired: boolean) => {
+    clearCsrfToken();
+    window.location.replace(expired ? "/operator/login?expired=1" : "/operator/login");
+  }, []);
 
   const handleAuthError = useCallback(
     (error: ApiError) => {
@@ -121,7 +122,7 @@ export function OperatorShell({ children }: { children: ReactNode }) {
                 key={item.href}
                 href={item.href}
                 aria-current={pathname === item.href ? "page" : undefined}
-                className={`inline-flex min-h-10 items-center rounded-md px-3 font-semibold ${
+                className={`inline-flex min-h-11 items-center rounded-md px-3 font-semibold md:min-h-10 ${
                   pathname === item.href
                     ? "bg-brand text-white"
                     : "bg-well text-muted hover:bg-line"

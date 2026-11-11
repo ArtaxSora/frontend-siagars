@@ -1,17 +1,17 @@
 import type { NextConfig } from "next";
+import { backendBaseUrl } from "./lib/api/backend";
 
 /**
- * Semua panggilan /api/v1/* diteruskan (rewrite) ke backend online sehingga
- * browser tetap same-origin dan cookie sesi bekerja. Backend hanya menerima
- * Origin yang sama dengan PUBLIC_ORIGIN miliknya: daftarkan origin frontend
- * (mis. http://localhost:3000) di sisi backend. Server-only (tanpa NEXT_PUBLIC_).
+ * /api/v1/* di-rewrite ke backend (arsip docs/archive/HANDOVER_PRODUCTION_v0.2.1.md §2): browser
+ * hanya bicara ke origin FE, jadi cookie sesi operator (Path=/api/v1) bekerja
+ * dan backend tidak perlu CORS. Server-only (tanpa NEXT_PUBLIC_); bawaan =
+ * backend production. Staging (terkunci) ditangani proxy.ts lebih dulu.
  */
-const DEFAULT_API_TARGET = "https://siagars-backend.vercel.app";
-const apiProxyTarget = (
-  process.env.API_PROXY_TARGET || DEFAULT_API_TARGET
-).replace(/\/+$/, "");
+const API_BASE_URL = backendBaseUrl();
 
 const nextConfig: NextConfig = {
+  // Dev server dibuka lewat IP jaringan lokal (mis. dari HP); tanpa ini HMR diblokir.
+  allowedDevOrigins: ["172.26.176.1"],
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
@@ -24,14 +24,12 @@ const nextConfig: NextConfig = {
     },
   },
   async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: "/api/v1/:path*",
-          destination: `${apiProxyTarget}/api/v1/:path*`,
-        },
-      ],
-    };
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${API_BASE_URL}/api/v1/:path*`,
+      },
+    ];
   },
 };
 

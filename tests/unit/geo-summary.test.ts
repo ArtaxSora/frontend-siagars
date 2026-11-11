@@ -9,13 +9,14 @@ import {
   visibleTiles,
 } from "../../lib/geo/mercator.ts";
 import {
+  hasSimulatedData,
   parseCompareIds,
   safeSourceUrl,
   telHref,
   uniqueOrigins,
   worstFreshness,
 } from "../../lib/hospitals/summary.ts";
-import type { Provenance } from "../../lib/contracts/types.ts";
+import type { Hospital, Provenance } from "../../lib/contracts/types.ts";
 
 const near = (a: number, b: number, eps = 1e-6) =>
   assert.ok(Math.abs(a - b) < eps, `${a} ≉ ${b}`);
@@ -124,13 +125,94 @@ describe("tautan & ID", () => {
     assert.equal(safeSourceUrl(null), null);
   });
 
-  test("parseCompareIds: 2–3 UUID unik", () => {
+  test("parseCompareIds: 2–3 ID unik, UUID atau external_id", () => {
     const a = "123e4567-e89b-12d3-a456-426614174000";
     const b = "123e4567-e89b-12d3-a456-426614174001";
     assert.deepEqual(parseCompareIds(`${a},${b}`), [a, b]);
+    assert.deepEqual(parseCompareIds(`${a},1004673817`), [a, "1004673817"]);
+    assert.deepEqual(parseCompareIds("1004673817,1000000001"), [
+      "1004673817",
+      "1000000001",
+    ]);
     assert.equal(parseCompareIds(a), null);
     assert.equal(parseCompareIds(`${a},${a}`), null);
-    assert.equal(parseCompareIds(`${a},bukan-uuid`), null);
+    assert.equal(parseCompareIds(`${a},${b},1,2`), null);
+    assert.equal(parseCompareIds(`${a},bukan id`), null);
+    assert.equal(parseCompareIds(`${a},<script>`), null);
+    assert.equal(parseCompareIds(`${a},`), null);
     assert.equal(parseCompareIds(null), null);
+  });
+});
+
+describe("penanda simulasi (API 0.2.1)", () => {
+  // RS nyata SATUSEHAT tanpa data fasilitas sama sekali.
+  const real: Hospital = {
+    id: "813e16c6-fd09-481d-821e-124f2e62ad5f",
+    external_id: "1004673817",
+    source_namespace: "satusehat:msi:sandbox",
+    name: "RS Nyata",
+    address: null,
+    city_code: "3216",
+    city_name: "Kab. Bekasi",
+    province_code: "32",
+    province_name: "Jawa Barat",
+    latitude: null,
+    longitude: null,
+    phone: null,
+    bpjs: null,
+    bpjs_data_origin: null,
+    bpjs_source_url: null,
+    bpjs_source_updated_at: null,
+    distance_km: null,
+    facility_class: null,
+    facility_subtype: null,
+    operational: null,
+    facility_summary: {
+      icu: "unknown",
+      nicu: "unknown",
+      picu: "unknown",
+      rawat_inap: "unknown",
+      bpjs: null,
+      inpatient_beds: { total: null, available: null, freshness: "unknown" },
+      last_source_updated_at: null,
+      data_origin: null,
+    },
+    data_quality: {
+      score: 24,
+      label: "terbatas",
+      completeness: 0.08,
+      freshness: "unknown",
+      primary_origin: "satusehat_sandbox",
+    },
+    data_origin: "satusehat_sandbox",
+    source_url: null,
+    source_updated_at: null,
+    synced_at: null,
+    verified_at: null,
+    freshness: "unknown",
+    services: [],
+    beds: [],
+  };
+
+  test("RS nyata tanpa data contoh bukan simulasi", () => {
+    assert.equal(hasSimulatedData(real), false);
+  });
+
+  test("RS nyata dengan data fasilitas/BPJS contoh dianggap simulasi", () => {
+    assert.equal(
+      hasSimulatedData({
+        ...real,
+        facility_summary: { ...real.facility_summary, data_origin: "simulation" },
+      }),
+      true,
+    );
+    assert.equal(
+      hasSimulatedData({ ...real, bpjs: true, bpjs_data_origin: "simulation" }),
+      true,
+    );
+  });
+
+  test("RS simulasi selalu simulasi", () => {
+    assert.equal(hasSimulatedData({ ...real, data_origin: "simulation" }), true);
   });
 });

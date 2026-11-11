@@ -6,7 +6,7 @@ import { listAdminReferrals, patchReferralStatus } from "@/lib/api/endpoints";
 import { REFERRAL_STATUS_LABEL, isRedirect } from "@/lib/contracts/labels";
 import {
   ALLOWED_TRANSITIONS,
-  type Referral,
+  type AdminReferral,
   type ReferralStatus,
 } from "@/lib/contracts/types";
 import { formatWib } from "@/lib/format/time";
@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Field, describedBy, inputClasses } from "@/components/ui/field";
 import { EmptyState, ErrorState, LoadingBlock } from "@/components/ui/states";
 
-const NOTE_MAX = 280;
+// Sama dengan batas API (public_note maks 500 karakter).
+const NOTE_MAX = 500;
 
 function ReferralRow({
   referral,
@@ -27,7 +28,7 @@ function ReferralRow({
   onSaved,
   onConflict,
 }: {
-  referral: Referral;
+  referral: AdminReferral;
   names: Record<string, string>;
   onSaved: (id: string) => void;
   onConflict: (id: string) => void;
@@ -75,7 +76,7 @@ function ReferralRow({
             Rujukan <span className="font-mono">{referral.id.slice(0, 8)}</span>
           </h2>
           <p className="text-muted">
-            Dari: {names[referral.owner_hospital_id] ?? referral.owner_hospital_id}
+            Dari: {referral.hospital_name}
           </p>
           {referral.destination_hospital_id && (
             <p className="text-muted">
@@ -189,11 +190,11 @@ export function ReferralManager() {
   }, [list.error, handleAuthError]);
 
   const referrals = list.data?.data ?? [];
+  // Nama RS pemilik ikut di daftar (hospital_name, API 0.3.1). Hanya RS tujuan
+  // — yang tidak membawa nama di DTO — masih diambil per ID.
   const names = useHospitalNames(
     referrals.flatMap((r) =>
-      r.destination_hospital_id
-        ? [r.owner_hospital_id, r.destination_hospital_id]
-        : [r.owner_hospital_id],
+      r.destination_hospital_id ? [r.destination_hospital_id] : [],
     ),
   );
 

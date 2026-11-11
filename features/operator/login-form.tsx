@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, setCsrfToken, toApiError } from "@/lib/api/client";
-import { login } from "@/lib/api/endpoints";
+import { getMe, login } from "@/lib/api/endpoints";
 import { Button } from "@/components/ui/button";
 import { Field, inputClasses } from "@/components/ui/field";
 import { describeApiError } from "@/components/ui/states";
@@ -16,6 +16,17 @@ export function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
+  // Sesi masih aktif (mis. datang dari tautan "Operator" di header): langsung
+  // ke panel. Efek ini juga jalan lagi saat halaman ditampilkan ulang dari
+  // cache router (cacheComponents menyimpan state halaman yang pernah dibuka).
+  useEffect(() => {
+    const controller = new AbortController();
+    getMe(controller.signal)
+      .then(() => router.replace("/operator/rujukan"))
+      .catch(() => {}); // 401 = belum login: tampilkan formulir
+    return () => controller.abort();
+  }, [router]);
+
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -23,8 +34,13 @@ export function LoginForm() {
     setError(null);
     try {
       const res = await login(email.trim(), password);
-      setCsrfToken(res.data.csrf_token);
+      // csrf_token bisa kosong; bila begitu client mengambilnya via /auth/csrf.
+      if (res.data.csrf_token) setCsrfToken(res.data.csrf_token);
       router.replace("/operator/rujukan");
+      // State halaman ini disimpan router; tanpa reset, setelah logout tombol
+      // masih "Masuk…" (disabled) dan login ulang tidak bisa.
+      setPassword("");
+      setLoading(false);
     } catch (err) {
       setError(toApiError(err));
       setPassword("");

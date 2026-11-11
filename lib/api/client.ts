@@ -1,7 +1,7 @@
 /**
  * Fetch wrapper tunggal untuk /api/v1.
  * - timeout, credentials same-origin (cookie session HttpOnly dari Go)
- * - parsing galat {error:{code,message}, request_id}
+ * - parsing galat {error:{code,message,details?}, request_id}
  * - CSRF: token dari /auth/csrf disimpan di MEMORI (bukan storage), dikirim
  *   sebagai X-CSRF-Token pada mutasi terautentikasi
  * - TIDAK ada retry otomatis, terutama untuk mutasi.
@@ -9,6 +9,7 @@
  */
 import type {
   ApiErrorBody,
+  ApiErrorDetail,
   ApiSuccess,
   CsrfResult,
 } from "@/lib/contracts/types";
@@ -24,6 +25,8 @@ export class ApiError extends Error {
   readonly code: string;
   readonly requestId: string | null;
   readonly retryAfterSeconds: number | null;
+  /** Rincian per field (422); kosong bila server tidak mengirimnya. */
+  readonly details: ApiErrorDetail[];
 
   constructor(init: {
     status: number;
@@ -31,6 +34,7 @@ export class ApiError extends Error {
     message: string;
     requestId?: string | null;
     retryAfterSeconds?: number | null;
+    details?: ApiErrorDetail[];
   }) {
     super(init.message);
     this.name = "ApiError";
@@ -38,6 +42,7 @@ export class ApiError extends Error {
     this.code = init.code;
     this.requestId = init.requestId ?? null;
     this.retryAfterSeconds = init.retryAfterSeconds ?? null;
+    this.details = init.details ?? [];
   }
 }
 
@@ -150,6 +155,7 @@ export async function apiRequest<T, M = unknown>(
       message: errBody?.error?.message ?? "Permintaan tidak dapat diproses.",
       requestId: errBody?.request_id ?? response.headers.get("X-Request-ID"),
       retryAfterSeconds: parseRetryAfter(response.headers.get("Retry-After")),
+      details: Array.isArray(errBody?.error?.details) ? errBody.error.details : [],
     });
   }
 
